@@ -33,7 +33,7 @@
 
 ---
 
-## ✅ Ordem Recomendada de Implementação — Funcionalidades Co-Up
+## ✅ Ordem de Implementação — Funcionalidades Co-Up
 
 ### 🧱 1. Bloco Base: Autenticação e Perfil
 
