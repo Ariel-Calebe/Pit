@@ -15,7 +15,7 @@
 
 ## Checklist de Funcionalidades
 
-- [ ] Cadastro de usuários
+- [X] Cadastro de usuários
 - [ ] Login com autenticação
 - [ ] Perfil de usuário com jogos favoritos
 - [ ] Busca por jogadores com filtros
@@ -37,12 +37,12 @@
 
 ### 🧱 1. Bloco Base: Autenticação e Perfil
 
-- [ ] RF01 — Criar conta
-- [ ] RF09 — Login com e-mail e senha
+- [X] RF01 — Criar conta
+- [X] RF09 — Login com e-mail e senha
 - [ ] RF10 — Recuperação de senha
 - [ ] RF02 — Configurar perfil com nome, foto e jogos favoritos
 - [ ] RF17 — Editar perfil
-- [ ] RF11 — Login com Google (extra)
+- [X] RF11 — Login com Google (extra)
 
 ---
 
