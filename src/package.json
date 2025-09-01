@@ -1,0 +1,25 @@
+{
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.3.0",
+    "concurrently": "^9.2.1",
+    "nodemon": "^3.1.10",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.2"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
+    "electron": "^37.4.0",
+    "express": "^5.1.0",
+    "firebase": "^12.2.1",
+    "firebase-admin": "^13.5.0"
+  },
+  "scripts": {
+    "dev:api": "nodemon --watch src --exec ts-node src/index.ts",
+    "dev:desktop": "concurrently \"npm:dev:api\" \"ts-node electron/main.ts\"",
+    "build": "tsc",
+    "start": "node dist/index.js"
+  }
+}

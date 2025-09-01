@@ -1,0 +1,16 @@
+# Node
+node_modules/
+dist/
+*.log
+
+# TS build cache
+*.tsbuildinfo
+
+# Ambiente/segredos
+.env
+serviceAccount.json
+
+# Editor/OS
+.vscode/
+.DS_Store
+Thumbs.db
