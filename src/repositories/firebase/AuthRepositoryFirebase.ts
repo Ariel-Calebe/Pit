@@ -3,6 +3,7 @@ import { auth, db } from "../../config/firebase";
 import { createUserWithEmailAndPassword, updateProfile, signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
 import { doc, serverTimestamp, setDoc } from "firebase/firestore";
 import { Player, PLAYERS_COLLECTION } from "../../models/Player";
+import { toPlatforms } from "../../util/platform";
 
 function stripUndefined<T extends object>(obj: T): T {
   return Object.fromEntries(Object.entries(obj).filter(([,v]) => v !== undefined)) as T;
@@ -23,7 +24,7 @@ export class AuthRepositoryFirebase implements IAuthRepository {
       photoUrl,
       country,
       languages,
-      platforms: platforms as any,
+      platforms: toPlatforms(platforms),         // << aqui
       favoriteGameIds,
       verified: false,
       createdAt: now,
@@ -31,9 +32,9 @@ export class AuthRepositoryFirebase implements IAuthRepository {
     };
 
     const ref = doc(db, PLAYERS_COLLECTION, player.id);
-    await setDoc(ref, { ...stripUndefined(player), createdAt: new Date(), updatedAt: new Date() });
+    await setDoc(ref, { ...player, createdAt: now, updatedAt: now });
 
-    return { ...player, photoUrl: photoUrl ?? undefined };
+    return player;
   }
 
   async signInWithEmail(email: string, password: string): Promise<LoginResult> {

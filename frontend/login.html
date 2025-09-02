@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8"/>
+  <title>Login • Co-Up</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <link rel="stylesheet" href="./styles.css"/>
+</head>
+<body>
+  <div class="container">
+    <div class="top"><h2>Co-Up</h2><small>play better. play together.</small></div>
+
+    <div class="card">
+      <h3>Entrar</h3>
+      <div class="row">
+        <div class="field"><label>E-mail</label><input id="email" placeholder="voce@email.com"></div>
+        <div class="field"><label>Senha</label><input id="pass" type="password" placeholder="••••••••"></div>
+      </div>
+      <div class="row" style="justify-content:space-between;align-items:center;margin-top:10px">
+        <a id="reset" href="#">Esqueceu a senha?</a>
+        <button class="btn brand" id="btnLogin">Entrar</button>
+      </div>
+    </div>
+
+    <div style="height:12px"></div>
+
+    <div class="card">
+      <h3>Criar conta</h3>
+      <div class="row">
+        <div class="field"><label>Nome</label><input id="suName" placeholder="Seu nome"></div>
+        <div class="field"><label>E-mail</label><input id="suEmail" placeholder="email@exemplo.com"></div>
+        <div class="field"><label>Senha</label><input id="suPass" type="password" placeholder="Crie uma senha"></div>
+      </div>
+      <div class="row">
+        <button class="btn" id="btnSignUp">Cadastrar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="./js/env.js"></script>
+  <script src="./js/ui.js"></script>
+  <script type="module">
+  import { requireGuest } from './js/guards.js';
+  import { ensurePersistence, signInEmailPassword, signUpEmailPassword, resetPassword } from './js/firebase-client.js';
+  import './js/api.js'; // expõe window.api
+
+  requireGuest();
+  const goHome = () => location.href = 'home.html';
+  const $ = (id) => document.getElementById(id);
+
+  await ensurePersistence();
+
+  document.getElementById('btnLogin').onclick = async () => {
+    try{
+      const idToken = await signInEmailPassword($('email').value, $('pass').value);
+      localStorage.setItem('idToken', idToken);
+      goHome();
+    }catch(e){ console.error(e); toast?.err(e.message || 'Falha no login'); }
+  };
+
+  document.getElementById('btnSignUp').onclick = async () => {
+    try{
+      if (!$('suName').value) { toast?.err('Informe seu nome'); return; }
+
+      // 1) cria user no Firebase Auth
+      const idToken = await signUpEmailPassword($('suEmail').value, $('suPass').value);
+      localStorage.setItem('idToken', idToken);
+
+      // 2) cria/atualiza perfil no backend (Firestore)
+      const payload = {
+        name: $('suName').value,
+        country: 'BR',                  // defina padrão ou capte do formulário
+        languages: ['pt'],              // idem
+        platforms: [],                  // idem (pode ser [] inicial)
+        favoriteGameIds: []             // idem
+      };
+      await window.api.setup(payload);
+
+      toast?.ok('Conta criada!');
+      goHome();
+    }catch(e){ console.error(e); toast?.err(e.message || 'Erro no cadastro'); }
+  };
+
+  document.getElementById('reset').onclick = async (ev) => {
+    ev.preventDefault();
+    try{
+      await resetPassword($('email').value);
+      toast?.ok('Email de recuperação enviado');
+    }catch(e){ console.error(e); toast?.err(e.message || 'Erro ao enviar'); }
+  };
+</script>
+</body>
+</html>

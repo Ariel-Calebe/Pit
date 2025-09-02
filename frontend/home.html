@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8"/>
+  <title>Home • Co-Up</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <link rel="stylesheet" href="./styles.css"/>
+</head>
+<body>
+  <div class="container">
+    <div class="top">
+      <h2>Co-Up — Home</h2>
+      <button class="btn" id="logout">Sair</button>
+    </div>
+
+    <div class="card">
+      <h3>Bem-vindo 👋</h3>
+      <pre id="me" style="white-space:pre-wrap"></pre>
+    </div>
+  </div>
+
+  <script src="./js/env.js"></script>
+  <script src="./js/ui.js"></script>
+  <script type="module">
+    import { requireAuth, logout } from './js/guards.js';
+    import './js/api.js'; // expõe window.api
+
+    requireAuth();
+
+    document.getElementById('logout').onclick = logout;
+
+    const meEl = document.getElementById('me');
+    try{
+      const me = await window.api.me(); // requer Authorization: Bearer idToken
+      meEl.textContent = JSON.stringify(me, null, 2);
+    }catch(e){
+      console.error(e);
+      meEl.textContent = 'Falha ao carregar perfil. Verifique a API.';
+      toast?.err(e.message || 'Erro ao buscar perfil');
+    }
+  </script>
+</body>
+</html>

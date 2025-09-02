@@ -1,0 +1,13 @@
+{
+  "name": "co-up-electron",
+  "version": "1.0.0",
+  "private": true,
+  "main": "electron-main.js",
+  "type": "module",
+  "scripts": {
+    "dev": "electron ."
+  },
+  "dependencies": {
+    "electron": "^31.3.0"
+  }
+}

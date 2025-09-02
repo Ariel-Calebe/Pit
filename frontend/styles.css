@@ -1,0 +1,11 @@
+:root { color-scheme: dark; }
+body{margin:0;font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;background:#0b1220;color:#e6ecf3}
+.container{max-width:880px;margin:40px auto;padding:0 16px}
+.card{background:#0f1524;border:1px solid #20304a;border-radius:16px;padding:20px}
+.row{display:flex;gap:12px;flex-wrap:wrap}
+.field{display:flex;flex-direction:column;gap:6px;flex:1;min-width:220px}
+input{background:#0b1120;border:1px solid #2a3b5e;border-radius:10px;padding:10px 12px;color:#e6ecf3}
+.btn{background:#1e2b4a;border:1px solid #2a3b5e;padding:10px 14px;border-radius:12px;color:#e6ecf3;cursor:pointer}
+.btn.brand{background:#2f6fed;border-color:#3a78ff}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+a{color:#9ab6ff;text-decoration:none}
