@@ -1,0 +1,695 @@
+<% layout('home-layout') -%>
+
+<section class="container mx-auto p-6 flex flex-col md:flex-row gap-6 h-full">
+  <!-- Left Column: Profile Information -->
+  <div class="flex-1 space-y-6">
+    <!-- Header do perfil -->
+    <header class="text-center relative">
+      <h2 class="text-2xl font-semibold">Meu Perfil</h2>
+      <p class="text-slate-500 mt-1">Bem-vindo(a), <%= player?.name || "Jogador" %>!</p>
+      <button id="exitBtn" class="absolute top-0 right-0 rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-500">
+        Sair
+      </button>
+
+      <!-- Notification Button -->
+      <button id="notificationBtn" class="absolute top-0 right-16 rounded-lg bg-slate-600 px-4 py-2 text-white hover:bg-slate-500 relative">
+        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5-5V7a3 3 0 00-6 0v5l-5 5h5m0 0v1a3 3 0 006 0v-1m-6 0h6"></path>
+        </svg>
+        <span id="notificationBadge" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center hidden"><%= unreadNotifications || 0 %></span>
+      </button>
+    </header>
+
+    <!-- Card do perfil -->
+    <div class="rounded-xl bg-white shadow p-6 flex flex-col items-center gap-4">
+      <!-- Avatar -->
+      <div class="relative">
+        <img
+          src="<%= player?.photoUrl || '/default-avatar.png' %>"
+          alt="Avatar"
+          class="h-28 w-28 rounded-full object-cover border"
+        />
+      </div>
+
+      <!-- Nome / País -->
+      <div class="text-center">
+        <h3 class="text-xl font-semibold"><%= player?.name || "Sem nome" %></h3>
+        <% if (player?.country) { %>
+          <p class="text-slate-500 text-sm mt-1">🌎 <%= player.country %></p>
+        <% } %>
+      </div>
+
+      <!-- Botões -->
+      <div class="pt-4 flex gap-2">
+        <a
+          href="/profile/edit"
+          class="inline-block rounded-lg bg-slate-900 px-5 py-2 text-white hover:bg-slate-800"
+        >
+          Editar Perfil
+        </a>
+        <a
+          href="/friends"
+          class="inline-block rounded-lg bg-slate-600 px-5 py-2 text-white hover:bg-slate-500"
+        >
+          Amigos
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Center Column: Callers (Calls) -->
+  <div class="relative flex flex-col h-full gap-6 flex-[2]">
+    <!-- Search and Filter Section -->
+    <div class="flex gap-2 items-center">
+      <input type="text" id="searchInput" placeholder="Buscar chamados..." class="flex-1 rounded-lg border px-3 py-2" />
+      <button id="filterBtn" class="rounded-lg bg-slate-600 px-4 py-2 text-white hover:bg-slate-500">
+        Filtrar
+      </button>
+    </div>
+
+    <!-- Filter Options Display -->
+    <% if (typeof filterOptions !== 'undefined' && filterOptions) { %>
+      <div id="filterOptions" class="text-sm text-slate-600 mt-2">
+        <span>Jogos disponíveis: <%= filterOptions.games.join(', ') %></span><br>
+        <span>Tipos: <%= filterOptions.callFriendly.join(', ') %></span><br>
+        <span>Estilos: <%= filterOptions.playstyles.join(', ') %></span>
+      </div>
+    <% } %>
+
+    <!-- Lista de Chamados -->
+    <div id="callsList" class="flex-1 overflow-y-auto h-0">
+      <% if (calls && calls.length) { %>
+        <div class="grid grid-cols-1 gap-6">
+          <% calls.forEach((call) => { %>
+            <div class="card rounded-lg bg-white shadow-md p-4 border">
+              <h3 class="text-xl font-semibold text-slate-800 truncate"><%= call.title %></h3>
+              <p class="text-slate-500 text-sm">Jogo: <%= call.gameId %></p>
+              <p class="text-slate-500 text-sm">Plataforma: <%= call.platform %></p>
+              <p class="text-slate-500 text-sm">Participantes: <%= call.participants.length %></p>
+
+              <% if (call.status === 'open') { %>
+                <div class="mt-4">
+                  <a href="/calls/<%= call.id %>" class="btn btn--primary">Entrar no chamado</a>
+                </div>
+              <% } else { %>
+                <p class="text-sm text-red-500 mt-2">Chamado fechado</p>
+              <% } %>
+            </div>
+          <% }) %>
+        </div>
+      <% } else { %>
+        <p class="text-center text-slate-500">Nenhum chamado aberto no momento.</p>
+      <% } %>
+    </div>
+
+    <!-- Floating Create Button -->
+    <button id="createCallBtn" class="fixed bottom-6 right-6 rounded-full bg-slate-900 p-4 text-white shadow-lg hover:bg-slate-800">
+      <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Right Column: Players with Similar Tastes -->
+  <div class="flex-1">
+    <div id="presenceWidget"></div>
+  </div>
+</section>
+
+<!-- Modal for Creating Call -->
+<div id="createCallModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50" onclick="closeModal()">
+  <div class="bg-white rounded-lg p-6 w-full max-w-md mx-4" onclick="event.stopPropagation()">
+    <h3 class="text-xl font-semibold text-center mb-4">Criar um Novo Chamado</h3>
+    <form id="createCallForm" class="space-y-4">
+      <div>
+        <label for="modalTitle" class="block text-sm font-medium">Título</label>
+        <input type="text" name="title" id="modalTitle" required class="w-full rounded-lg border px-3 py-2" placeholder="Título do chamado" />
+      </div>
+
+      <div>
+        <label for="modalGameId" class="block text-sm font-medium">Jogo</label>
+        <input type="text" name="gameId" id="modalGameId" required class="w-full rounded-lg border px-3 py-2" placeholder="Nome do Jogo" />
+      </div>
+
+      <div>
+        <label for="modalPlatform" class="block text-sm font-medium">Plataforma</label>
+        <input type="text" name="platform" id="modalPlatform" required class="w-full rounded-lg border px-3 py-2" placeholder="Plataforma (ex: pc, playstation)" />
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium">Call-friendly</label>
+        <div class="flex gap-4">
+          <label class="flex items-center">
+            <input type="radio" name="callFriendly" value="friendly" class="mr-2" required />
+            Amigável
+          </label>
+          <label class="flex items-center">
+            <input type="radio" name="callFriendly" value="competitive" class="mr-2" required />
+            Competitivo
+          </label>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium">Estilo de Jogo</label>
+        <div class="grid grid-cols-2 gap-2">
+          <label class="flex items-center">
+            <input type="checkbox" name="playstyle" value="competitive" class="mr-2" />
+            Competitivo 🏆
+          </label>
+          <label class="flex items-center">
+            <input type="checkbox" name="playstyle" value="casual" class="mr-2" />
+            Casual 🎮
+          </label>
+          <label class="flex items-center">
+            <input type="checkbox" name="playstyle" value="fps" class="mr-2" />
+            FPS 🔫
+          </label>
+          <label class="flex items-center">
+            <input type="checkbox" name="playstyle" value="moba" class="mr-2" />
+            MOBA 🐉
+          </label>
+          <label class="flex items-center">
+            <input type="checkbox" name="playstyle" value="rpg" class="mr-2" />
+            RPG ⚔️
+          </label>
+          <label class="flex items-center">
+            <input type="checkbox" name="playstyle" value="strategy" class="mr-2" />
+            Strategy 🧠
+          </label>
+          <label class="flex items-center">
+            <input type="checkbox" name="playstyle" value="battle-royale" class="mr-2" />
+            Battle Royale 💣
+          </label>
+        </div>
+      </div>
+
+      <div class="flex gap-2">
+        <button type="submit" class="flex-1 rounded-lg bg-slate-900 px-5 py-2 text-white hover:bg-slate-800">
+          Criar Chamado
+        </button>
+        <button type="button" id="cancelBtn" class="flex-1 rounded-lg bg-slate-500 px-5 py-2 text-white hover:bg-slate-400">
+          Cancelar
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal for Filters -->
+<div id="filterModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50" onclick="closeFilterModal()">
+  <div class="bg-white rounded-lg p-6 w-full max-w-md mx-4" onclick="event.stopPropagation()">
+    <h3 class="text-xl font-semibold text-center mb-4">Filtros</h3>
+    <form id="filterForm" class="space-y-4">
+      <div>
+        <label for="filterGame" class="block text-sm font-medium">Jogo</label>
+        <input type="text" id="filterGame" class="w-full rounded-lg border px-3 py-2" placeholder="Nome do Jogo" />
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium">Call-friendly</label>
+        <div class="flex gap-4">
+          <label class="flex items-center">
+            <input type="radio" name="callFriendly" value="friendly" class="mr-2" />
+            Amigável
+          </label>
+          <label class="flex items-center">
+            <input type="radio" name="callFriendly" value="competitive" class="mr-2" />
+            Competitivo
+          </label>
+          <label class="flex items-center">
+            <input type="radio" name="callFriendly" value="any" class="mr-2" checked />
+            Qualquer
+          </label>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium">Estilo de Jogo</label>
+        <div class="grid grid-cols-2 gap-2">
+          <label class="flex items-center">
+            <input type="checkbox" name="playstyle" value="competitive" class="mr-2" />
+            Competitivo 🏆
+          </label>
+          <label class="flex items-center">
+            <input type="checkbox" name="playstyle" value="casual" class="mr-2" />
+            Casual 🎮
+          </label>
+          <label class="flex items-center">
+            <input type="checkbox" name="playstyle" value="fps" class="mr-2" />
+            FPS 🔫
+          </label>
+          <label class="flex items-center">
+            <input type="checkbox" name="playstyle" value="moba" class="mr-2" />
+            MOBA 🐉
+          </label>
+          <label class="flex items-center">
+            <input type="checkbox" name="playstyle" value="rpg" class="mr-2" />
+            RPG ⚔️
+          </label>
+          <label class="flex items-center">
+            <input type="checkbox" name="playstyle" value="strategy" class="mr-2" />
+            Strategy 🧠
+          </label>
+          <label class="flex items-center">
+            <input type="checkbox" name="playstyle" value="battle-royale" class="mr-2" />
+            Battle Royale 💣
+          </label>
+        </div>
+      </div>
+
+      <div class="flex gap-2">
+        <button type="submit" class="flex-1 rounded-lg bg-slate-900 px-5 py-2 text-white hover:bg-slate-800">
+          Aplicar Filtros
+        </button>
+        <button type="button" id="clearFiltersBtn" class="flex-1 rounded-lg bg-slate-500 px-5 py-2 text-white hover:bg-slate-400">
+          Limpar
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  console.log('[home] script carregado');
+
+  // dispara tudo após a página terminar de carregar
+  window.addEventListener('load', () => {
+    console.log('[home] window load');
+
+    // 1) Anuncia ONLINE (envia cookie com credentials)
+    (async function announceOnline() {
+      try {
+        console.log('[presence] POST /presence/online');
+        const r = await fetch('/presence/online', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          credentials: 'same-origin',      // << garante envio do cookie `session`
+          body: JSON.stringify({})
+        });
+        console.log('[presence] /presence/online status:', r.status);
+      } catch (e) {
+        console.error('[presence] erro ao anunciar online', e);
+      }
+    })();
+
+    // 2) Heartbeat a cada 60s (também com cookie)
+    const heartbeatInterval = setInterval(() => {
+      fetch('/presence/ping', {
+        method: 'POST',
+        headers: { 'Accept': 'application/json' },
+        credentials: 'same-origin'        // << garante cookie no ping
+      })
+      .then(r => console.log('[presence] /presence/ping', r.status))
+      .catch(err => console.warn('[presence] ping falhou', err));
+    }, 60_000);
+
+    // 3) Set offline on page unload or exit button
+    async function setOffline() {
+      try {
+        console.log('[presence] POST /presence/offline');
+        await fetch('/presence/offline', {
+          method: 'POST',
+          headers: { 'Accept': 'application/json' },
+          credentials: 'same-origin'
+        });
+        console.log('[presence] offline set');
+      } catch (e) {
+        console.error('[presence] erro ao set offline', e);
+      }
+    }
+
+    window.addEventListener('beforeunload', setOffline);
+    document.getElementById('exitBtn').addEventListener('click', async () => {
+      await setOffline();
+      clearInterval(heartbeatInterval);
+      window.location.href = '/auth';
+    });
+
+    // 3) Carrega widget de semelhantes (HTML) com cookie
+    async function loadSimilarOnline() {
+      try {
+        console.log('[presence] GET /players/online/similar (HTML)');
+        const res = await fetch('/players/online/similar?limit=12', {
+          headers: { 'Accept': 'text/html' },
+          credentials: 'same-origin'      // << garante cookie no GET
+        });
+        const html = await res.text();
+        const mount = document.getElementById('presenceWidget');
+        if (mount) mount.innerHTML = html;
+        console.log('[presence] similar carregado:', res.status);
+      } catch (e) {
+        console.warn('[presence] similar falhou', e);
+      }
+    }
+    loadSimilarOnline();
+    setInterval(loadSimilarOnline, 60_000);
+
+    // 4) Carrega e atualiza chamados automaticamente
+    let currentFilters = {}; // Store current filter settings
+
+    async function loadCalls() {
+      try {
+        // Build query string from current filters
+        const params = new URLSearchParams();
+        if (currentFilters.game) params.append('gameId', currentFilters.game);
+        if (currentFilters.callFriendly && currentFilters.callFriendly !== 'any') params.append('callFriendly', currentFilters.callFriendly);
+        if (currentFilters.playstyles && currentFilters.playstyles.length > 0) params.append('playstyles', currentFilters.playstyles.join(','));
+        if (currentFilters.search) params.append('search', currentFilters.search);
+
+        const queryString = params.toString();
+        const url = `/calls${queryString ? '?' + queryString : ''}`;
+
+        console.log('[calls] GET', url, '(JSON)');
+        const res = await fetch(url, {
+          headers: { 'Accept': 'application/json' },
+          credentials: 'same-origin'
+        });
+        const data = await res.json();
+        const calls = data.calls || data; // Handle both old and new response formats
+        const filterOptions = data.filterOptions;
+
+        console.log('[calls] carregados:', calls.length);
+        if (filterOptions) {
+          console.log('[calls] opções de filtro:', filterOptions);
+          updateFilterOptionsDisplay(filterOptions);
+        }
+
+        displayCalls(calls); // Display the filtered calls from server
+      } catch (e) {
+        console.warn('[calls] falhou ao carregar chamados', e);
+      }
+    }
+
+    // Function to update filter options display
+    function updateFilterOptionsDisplay(filterOptions) {
+      const filterOptionsDiv = document.getElementById('filterOptions');
+      if (!filterOptionsDiv) return;
+
+      filterOptionsDiv.innerHTML = `
+        <span>Jogos disponíveis: ${filterOptions.games.join(', ')}</span><br>
+        <span>Tipos: ${filterOptions.callFriendly.join(', ')}</span><br>
+        <span>Estilos: ${filterOptions.playstyles.join(', ')}</span>
+      `;
+    }
+
+    // Function to display calls (no client-side filtering)
+    function displayCalls(calls) {
+      const callsList = document.getElementById('callsList');
+      if (!callsList) return;
+
+      let html = '';
+      if (calls && calls.length) {
+        html += '<div class="grid grid-cols-1 gap-6">';
+        calls.forEach(call => {
+          html += `
+            <div class="card rounded-lg bg-white shadow-md p-4 border">
+              <h3 class="text-xl font-semibold text-slate-800 truncate">${call.title}</h3>
+              <p class="text-slate-500 text-sm">Jogo: ${call.gameId}</p>
+              <p class="text-slate-500 text-sm">Plataforma: ${call.platform}</p>
+              <p class="text-slate-500 text-sm">Participantes: ${call.participants.length}</p>
+              ${call.status === 'open' ?
+                `<div class="mt-4">
+                  <a href="/calls/${call.id}" class="btn btn--primary">Entrar no chamado</a>
+                </div>` :
+                `<p class="text-sm text-red-500 mt-2">Chamado fechado</p>`
+              }
+            </div>
+          `;
+        });
+        html += '</div>';
+      } else {
+        html = '<p class="text-center text-slate-500">Nenhum chamado encontrado.</p>';
+      }
+
+      callsList.innerHTML = html;
+    }
+
+    loadCalls();
+    setInterval(loadCalls, 10_000); // Atualiza a cada 10 segundos
+
+    // Add real-time search functionality
+    document.getElementById('searchInput').addEventListener('input', (e) => {
+      const searchTerm = e.target.value.trim();
+      currentFilters.search = searchTerm;
+      loadCalls();
+    });
+
+    // Filter modal functionality
+    const filterBtn = document.getElementById('filterBtn');
+    const filterModal = document.getElementById('filterModal');
+    const filterForm = document.getElementById('filterForm');
+    const clearFiltersBtn = document.getElementById('clearFiltersBtn');
+
+    filterBtn.addEventListener('click', () => {
+      filterModal.classList.remove('hidden');
+    });
+
+    // Close filter modal when clicking outside
+    function closeFilterModal() {
+      filterModal.classList.add('hidden');
+    }
+
+    filterForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const formData = new FormData(filterForm);
+      const filters = Object.fromEntries(formData);
+
+      // Process playstyle checkboxes
+      const playstyles = [];
+      for (const [key, value] of formData.entries()) {
+        if (key === 'playstyle') {
+          playstyles.push(value);
+        }
+      }
+
+      currentFilters = {
+        game: filters.filterGame,
+        callFriendly: filters.callFriendly,
+        playstyles: playstyles
+      };
+
+      filterModal.classList.add('hidden');
+      loadCalls(); // Reload calls with new filters
+    });
+
+    clearFiltersBtn.addEventListener('click', () => {
+      filterForm.reset();
+      currentFilters = {};
+      filterModal.classList.add('hidden');
+      loadCalls(); // Reload calls without filters
+    });
+
+    // Apply filters in real-time
+    const filterInputs = filterForm.querySelectorAll('input');
+    filterInputs.forEach(input => {
+      const eventType = input.type === 'text' ? 'input' : 'change';
+      input.addEventListener(eventType, () => {
+        const formData = new FormData(filterForm);
+        const filters = Object.fromEntries(formData);
+        const playstyles = [];
+        for (const [key, value] of formData.entries()) {
+          if (key === 'playstyle') playstyles.push(value);
+        }
+        currentFilters = {
+          game: filters.filterGame,
+          callFriendly: filters.callFriendly,
+          playstyles: playstyles
+        };
+        loadCalls(); // Reload calls with updated filters
+      });
+    });
+
+    // Modal functionality
+    const createCallBtn = document.getElementById('createCallBtn');
+    const createCallModal = document.getElementById('createCallModal');
+    const createCallForm = document.getElementById('createCallForm');
+    const cancelBtn = document.getElementById('cancelBtn');
+
+    createCallBtn.addEventListener('click', () => {
+      createCallModal.classList.remove('hidden');
+    });
+
+    cancelBtn.addEventListener('click', () => {
+      createCallModal.classList.add('hidden');
+      createCallForm.reset();
+    });
+
+    // Close modal when clicking outside
+    createCallModal.addEventListener('click', (e) => {
+      if (e.target === createCallModal) {
+        createCallModal.classList.add('hidden');
+        createCallForm.reset();
+      }
+    });
+
+    createCallForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(createCallForm);
+      const data = Object.fromEntries(formData);
+
+      // Process playstyle checkboxes
+      const playstyles = [];
+      for (const [key, value] of formData.entries()) {
+        if (key === 'playstyle') {
+          playstyles.push(value);
+        }
+      }
+
+      const callData = {
+        ...data,
+        playstyles: playstyles
+      };
+
+      console.log('Enviando dados do formulário:', callData);
+
+      try {
+        console.log('Fazendo requisição POST para /calls');
+        const res = await fetch('/calls', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          credentials: 'same-origin',
+          body: JSON.stringify(callData)
+        });
+        console.log('Status da resposta:', res.status);
+
+        if (res.ok) {
+          const callData = await res.json();
+          console.log('Chamado criado com sucesso:', callData);
+          createCallModal.classList.add('hidden');
+          createCallForm.reset();
+          window.showToast('Chamado criado com sucesso!');
+          // Add a small delay to ensure the call is fully persisted before redirecting
+          setTimeout(() => {
+            window.location.href = `http://localhost:3000/calls/${callData.id}`;
+          }, 1000);
+        } else {
+          const error = await res.json();
+          console.error('Erro na resposta do servidor:', error);
+          window.showToast(error.message || 'Erro ao criar chamado');
+        }
+      } catch (error) {
+        console.error('Erro ao criar chamado:', error);
+        window.showToast('Erro ao criar chamado');
+      }
+    });
+  });
+
+  // Notification functionality
+  let notificationModal = null;
+
+  async function loadNotifications() {
+    try {
+      const res = await fetch('/notifications', {
+        headers: { 'Accept': 'application/json' },
+        credentials: 'same-origin'
+      });
+      const data = await res.json();
+      const notifications = data.notifications || [];
+
+      // Update badge
+      const unreadCount = notifications.filter(n => !n.read).length;
+      const badge = document.getElementById('notificationBadge');
+      if (badge) {
+        badge.textContent = unreadCount.toString();
+        badge.classList.toggle('hidden', unreadCount === 0);
+      }
+
+      return notifications;
+    } catch (e) {
+      console.warn('[notifications] failed to load', e);
+      return [];
+    }
+  }
+
+  function createNotificationModal(notifications) {
+    // Remove existing modal if any
+    if (notificationModal) {
+      notificationModal.remove();
+    }
+
+    // Create modal container
+    notificationModal = document.createElement('div');
+    notificationModal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+    notificationModal.onclick = () => notificationModal.remove();
+
+    // Create modal content
+    const modalContent = document.createElement('div');
+    modalContent.className = 'bg-white rounded-lg p-6 w-full max-w-md mx-4 max-h-96 overflow-y-auto';
+    modalContent.onclick = (e) => e.stopPropagation();
+
+    // Header
+    const header = document.createElement('div');
+    header.className = 'flex justify-between items-center mb-4';
+    header.innerHTML = `
+      <h3 class="text-xl font-semibold">Notificações</h3>
+      <button class="text-gray-500 hover:text-gray-700" onclick="this.closest('.fixed').remove()">×</button>
+    `;
+
+    // Notifications list
+    const list = document.createElement('div');
+    list.className = 'space-y-3';
+
+    if (notifications.length > 0) {
+      notifications.forEach(notification => {
+        const item = document.createElement('div');
+        item.className = `p-3 rounded-lg border ${notification.read ? 'bg-gray-50' : 'bg-blue-50 border-blue-200'}`;
+
+        item.innerHTML = `
+          <div class="text-sm text-gray-800">${notification.message}</div>
+          <div class="text-xs text-gray-500 mt-1">${new Date(notification.createdAt).toLocaleString('pt-BR')}</div>
+          ${!notification.read ? '<button class="text-xs text-blue-600 mt-1" onclick="markAsRead(\'' + notification.id + '\')">Marcar como lida</button>' : ''}
+        `;
+
+        list.appendChild(item);
+      });
+    } else {
+      list.innerHTML = '<div class="text-center text-gray-500 py-4">Nenhuma notificação</div>';
+    }
+
+    // Footer with link to full list
+    const footer = document.createElement('div');
+    footer.className = 'mt-4 pt-4 border-t';
+    footer.innerHTML = '<a href="/notifications" class="text-blue-600 text-sm hover:underline">Ver todas as notificações</a>';
+
+    modalContent.appendChild(header);
+    modalContent.appendChild(list);
+    modalContent.appendChild(footer);
+    notificationModal.appendChild(modalContent);
+    document.body.appendChild(notificationModal);
+  }
+
+  // Mark notification as read
+  async function markAsRead(id) {
+    try {
+      await fetch(`/notifications/${id}/read`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin'
+      });
+      // Reload notifications
+      const notifications = await loadNotifications();
+      createNotificationModal(notifications);
+    } catch (e) {
+      console.error('Error marking as read:', e);
+    }
+  }
+
+  // Make markAsRead global
+  window.markAsRead = markAsRead;
+
+  // Notification button click
+  document.getElementById('notificationBtn').addEventListener('click', async () => {
+    const notifications = await loadNotifications();
+    createNotificationModal(notifications);
+  });
+
+  // Load notifications on page load
+  loadNotifications();
+</script>

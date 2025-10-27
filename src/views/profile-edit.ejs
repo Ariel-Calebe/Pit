@@ -1,0 +1,875 @@
+<% layout('layout') -%>
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Editar perfil</title>
+
+  <!-- Fontes padrão do projeto (iguais ao login) -->
+  <link href="https://fonts.googleapis.com/css2?family=Asap:wght@400;500;600;700&family=Atkinson+Hyperlegible:wght@400;700&family=Barlow:wght@500;700&display=swap" rel="stylesheet"/>
+
+  <style>
+    /* =======================
+       TOKENS (iguais ao login)
+       ======================= */
+    :root{
+      /* Fundos */
+      --app-bg:#0F1016;
+      --card-bg:#1E202D;
+      --nav-bg:#21232D;
+
+      /* Texto */
+      --text-primary:#0E1B1A; /* p/ superfícies claras */
+      --text-muted:#778C8A;
+      --text-light:#BDFFD3;
+      --text-ivory:#E5FFF5;
+
+      /* Verdes */
+      --green-nav:#04BF8A;        /* ícones nav bar */
+      --green-menu:#48DE8D;       /* ícones menus */
+      --green-edit:#54BD95;       /* editar perfil */
+      --green-filter:#97ABB7;     /* filtro */
+      --green-main:#39DF79;       /* CTA principal */
+      --green-soft:#98FB98;       /* subtom claro */
+      --green-emerald:#48DE8D;    /* esmeralda ícones */
+      --green-dark:#0E2C20;       /* verde escuro */
+      --green-emerald-light:#80FFCC;
+
+      /* Gradiente card selecionado */
+      --sel-1:#493DA0; --sel-2:#255F90; --sel-3:#008080;
+      --sel-4:#249B8E; --sel-5:#48B59D; --sel-6:#48A1A4;
+      --sel-7:#488CAC; --sel-8:#336A99; --sel-9:#1E4887;
+
+      /* Bordas/Sombras/Foco */
+      --border-soft:rgba(229,255,245,0.10);
+      --shadow-1:0 10px 24px rgba(0,0,0,.40);
+      --shadow-2:0 18px 38px rgba(0,0,0,.45);
+      --focus-ring:0 0 0 3px rgba(72,222,141,.35);
+
+      /* Tipografia */
+      --font-body:'Asap', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      --font-button:'Atkinson Hyperlegible', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      --font-title:'Barlow', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+
+      /* Raio/medidas */
+      --r-sm:10px;
+      --r-md:14px;
+      --r-xl:20px;
+      --r-2xl:24px;
+      --r-pill:999px;
+
+      /* Grid/container */
+      --container-max:1200px;
+      --sidebar-w:360px;
+
+      /* Transições */
+      --tr-fast:120ms ease;
+      --tr-med:200ms ease;
+      --tr-slow:320ms ease;
+    }
+
+    /* ================
+       BASE/RESET
+       ================ */
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      min-height:100dvh;
+      background:var(--app-bg);
+      color:var(--text-ivory);
+      font-family:var(--font-body);
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+    }
+    a{color:var(--green-emerald);text-decoration:none;transition:color var(--tr-fast)}
+    a:hover{color:var(--green-main)}
+
+    /* ================
+       LAYOUT
+       ================ */
+    .page{
+      width:100%;
+      max-width:var(--container-max);
+      margin:0 auto;
+      padding:24px 16px;
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:24px;
+    }
+    @media (min-width: 1024px){
+      .page{
+        grid-template-columns: 1fr var(--sidebar-w);
+        align-items:start;
+      }
+    }
+
+    /* Card base */
+    .card{
+      background:var(--card-bg);
+      border:1px solid var(--border-soft);
+      border-radius:var(--r-2xl);
+      box-shadow:var(--shadow-2);
+      padding:20px;
+    }
+
+    /* Header da página */
+    .page__header{
+      display:flex; align-items:center; justify-content:space-between;
+      gap:12px; margin-bottom:8px;
+    }
+    .page__title{
+      margin:0;
+      font-family:var(--font-title);
+      font-size:22px;
+      letter-spacing:.2px;
+    }
+    .page__subtitle{margin:0;color:var(--text-muted);font-size:14px}
+
+    /* Grid interno do formulário */
+    .form-grid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:16px;
+    }
+    @media (min-width: 768px){
+      .form-grid{
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    /* Seções (Avatar, Nome & País, etc.) */
+    .section{
+      background:var(--card-bg);
+      border:1px solid var(--border-soft);
+      border-radius:var(--r-xl);
+      padding:16px;
+    }
+    .section + .section{margin-top:12px}
+    .section__header{
+      display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:12px;
+    }
+    .section__title{
+      font-family:var(--font-title);
+      color:var(--text-light);
+      font-weight:700;
+      letter-spacing:.2px;
+      margin:0;
+      font-size:16px;
+    }
+    .section__content{color:var(--text-ivory);font-size:14px}
+
+    /* Botões utilitários das seções */
+    .btn-inline{
+      padding:8px 12px;
+      border-radius:var(--r-sm);
+      border:1px solid rgba(229,255,245,.18);
+      background:transparent;
+      color:var(--text-light);
+      font-weight:600;
+      cursor:pointer;
+      transition:background var(--tr-fast), transform var(--tr-fast);
+    }
+    .btn-inline:hover{background:rgba(72,222,141,.10)}
+    .btn-inline:active{transform:translateY(1px)}
+
+    /* Inputs */
+    .input{
+      width:100%;
+      background:#1b1d28;
+      color:var(--text-ivory);
+      border:1px solid rgba(255,255,255,.06);
+      border-radius:var(--r-md);
+      padding:12px 14px;
+      font-family:var(--font-body);
+      outline:none;
+      transition:border-color var(--tr-fast), box-shadow var(--tr-fast), background var(--tr-fast);
+    }
+    .input::placeholder{color:var(--text-muted)}
+    .input:focus{
+      border-color:transparent;
+      box-shadow:var(--focus-ring);
+      background:#1a1c26;
+    }
+
+    /* Chips e caixas de seleção visual */
+    .chip{
+      display:inline-flex; align-items:center; justify-content:center;
+      padding:8px 12px; border-radius:var(--r-pill);
+      border:1px solid rgba(229,255,245,.14);
+      color:var(--text-light);
+      font-size:13px; cursor:pointer; user-select:none;
+      transition:background var(--tr-fast), border-color var(--tr-fast), transform var(--tr-fast);
+    }
+    .chip:hover{transform:translateY(-1px)}
+    .chip.selected{
+      background:linear-gradient(90deg, rgba(72,222,141,.10), rgba(72,222,141,.06));
+      border-color:var(--green-main);
+      color:var(--green-dark);
+      font-weight:600;
+    }
+    .chips{display:flex; gap:8px; flex-wrap:wrap}
+
+    /* Avatar */
+    .avatar{
+      height:72px; width:72px; border-radius:12px; overflow:hidden;
+      display:flex; align-items:center; justify-content:center;
+      border:2px solid transparent; background:#1b1d28; cursor:pointer;
+      transition:box-shadow var(--tr-fast), border-color var(--tr-fast), transform var(--tr-fast);
+    }
+    .avatar:hover{transform:translateY(-1px)}
+    .avatar img{width:100%; height:100%; object-fit:cover; display:block}
+    .avatar.selected{
+      border-color:var(--green-main);
+      box-shadow:0 8px 24px rgba(72,222,141,.12) inset;
+    }
+
+    /* Ações principais */
+    .actions{display:flex; gap:10px; flex-wrap:wrap; margin-top:10px}
+    .btn{
+      --btn-bg: linear-gradient(135deg, var(--green-main), var(--green-emerald));
+      display:inline-flex; align-items:center; justify-content:center;
+      gap:8px; padding:12px 20px; border-radius:var(--r-pill); border:1px solid rgba(72,222,141,.45);
+      background:var(--btn-bg); color:var(--card-bg); font-family:var(--font-button); font-weight:700;
+      cursor:pointer; box-shadow:0 10px 22px rgba(72,222,141,.28), inset 0 -2px 0 rgba(0,0,0,.25);
+      transition:transform var(--tr-fast), box-shadow var(--tr-fast), filter var(--tr-fast);
+      min-height:40px;
+    }
+    .btn:hover{filter:brightness(1.06)}
+    .btn:active{transform:translateY(1px)}
+    .btn--ghost{
+      background:transparent; color:var(--text-ivory);
+      border:1px solid rgba(229,255,245,.20);
+      box-shadow:none;
+    }
+    .btn--ghost:hover{background:rgba(229,255,245,.06)}
+
+    /* Sidebar (Resumo) */
+    .sidebar{position:relative}
+    @media (min-width:1024px){
+      .sidebar__sticky{position:sticky; top:20px}
+    }
+    .summary .row{
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      padding:10px; border:1px solid var(--border-soft); border-radius:var(--r-md);
+      background:rgba(255,255,255,.02);
+    }
+    .summary .label{color:var(--text-muted); font-size:13px}
+    .summary .value{color:var(--text-ivory)}
+
+    /* Modais */
+    .modal{position:fixed; inset:0; display:none; align-items:center; justify-content:center;
+      background:rgba(0,0,0,.45); backdrop-filter:blur(3px); z-index:1000; padding:18px;}
+    .modal__content{background:var(--card-bg); border:1px solid var(--border-soft); border-radius:var(--r-xl);
+      box-shadow:var(--shadow-2); padding:20px; width:100%; max-width:520px; max-height:80vh; overflow:auto;}
+    .modal__header{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:12px}
+    .modal__title{font-family:var(--font-title); color:var(--text-light); font-weight:700; margin:0; font-size:18px}
+    .modal__close{background:none; border:none; color:var(--text-muted); font-size:22px; cursor:pointer}
+
+    .avatar-grid{display:grid; gap:12px; grid-template-columns: repeat(4,1fr)}
+    .avatar-grid .avatar{width:100%; height:80px; border-radius:10px}
+
+    .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;padding:0;margin:-1px}
+  </style>
+</head>
+
+<body>
+  <main class="page">
+    <!-- Coluna principal -->
+    <section class="card">
+      <header class="page__header">
+        <div>
+          <h1 class="page__title" id="page-title">Editar perfil</h1>
+          <p class="page__subtitle">Atualize suas informações com o mesmo visual do login.</p>
+        </div>
+      </header>
+
+      <!-- GRID DE SEÇÕES -->
+      <div class="form-grid" aria-labelledby="page-title">
+        <!-- AVATAR -->
+        <section class="section" aria-labelledby="sec-avatar-title">
+          <div class="section__header">
+            <h2 id="sec-avatar-title" class="section__title">Avatar</h2>
+            <button type="button" class="btn-inline edit-btn" data-section="avatar" aria-controls="avatarModal">Editar</button>
+          </div>
+          <div class="section__content">
+            <div class="chips" style="align-items:center">
+              <div class="avatar" id="currentAvatarWrap" title="Avatar atual">
+                <img id="currentAvatar" src="<%= player.photoUrl || '/images/avatares_players/' + (player.avatar || 'Ariel.png') %>" alt="Avatar atual">
+              </div>
+              <span id="currentAvatarName"><%= player.avatar ? player.avatar.replace('.png','').replace('.jpg','') : 'Ariel' %></span>
+            </div>
+          </div>
+        </section>
+
+        <!-- NOME & PAÍS -->
+        <section class="section" aria-labelledby="sec-nome-title">
+          <div class="section__header">
+            <h2 id="sec-nome-title" class="section__title">Nome & País</h2>
+            <button type="button" class="btn-inline edit-btn" data-section="name-country" aria-controls="nameCountryModal">Editar</button>
+          </div>
+          <div class="section__content">
+            <div class="summary">
+              <div class="row">
+                <div class="label">Nome</div>
+                <div id="currentName" class="value"><%= player.username || '' %></div>
+              </div>
+              <div class="row" style="margin-top:8px">
+                <div class="label">País</div>
+                <div id="currentCountry" class="value"><%= player.country || '' %></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- IDIOMAS -->
+        <section class="section" aria-labelledby="sec-idiomas-title">
+          <div class="section__header">
+            <h2 id="sec-idiomas-title" class="section__title">Idiomas</h2>
+            <button type="button" class="btn-inline edit-btn" data-section="languages" aria-controls="languagesModal">Editar</button>
+          </div>
+          <div class="section__content">
+            <div id="currentLanguages" class="value"><%= (player.languages && player.languages.join(', ')) || '' %></div>
+          </div>
+        </section>
+
+        <!-- JOGOS -->
+        <section class="section" aria-labelledby="sec-jogos-title">
+          <div class="section__header">
+            <h2 id="sec-jogos-title" class="section__title">Jogos</h2>
+            <button type="button" class="btn-inline edit-btn" data-section="games" aria-controls="gamesModal">Editar</button>
+          </div>
+          <div class="section__content">
+            <div id="currentGames" class="value"><%= (player.games && player.games.join(', ')) || '' %></div>
+          </div>
+        </section>
+
+        <!-- PLATAFORMAS -->
+        <section class="section" aria-labelledby="sec-plataformas-title">
+          <div class="section__header">
+            <h2 id="sec-plataformas-title" class="section__title">Plataformas</h2>
+            <button type="button" class="btn-inline edit-btn" data-section="platforms" aria-controls="platformsModal">Editar</button>
+          </div>
+          <div class="section__content">
+            <div id="currentPlatforms" class="value"><%= (player.platforms && player.platforms.join(', ')) || '' %></div>
+          </div>
+        </section>
+
+        <!-- GÊNEROS -->
+        <section class="section" aria-labelledby="sec-generos-title">
+          <div class="section__header">
+            <h2 id="sec-generos-title" class="section__title">Gêneros</h2>
+            <button type="button" class="btn-inline edit-btn" data-section="genres" aria-controls="genresModal">Editar</button>
+          </div>
+          <div class="section__content">
+            <div id="currentGenres" class="value"><%= (player.genres && player.genres.join(', ')) || '' %></div>
+          </div>
+        </section>
+
+        <!-- ESTILOS -->
+        <section class="section" aria-labelledby="sec-estilos-title">
+          <div class="section__header">
+            <h2 id="sec-estilos-title" class="section__title">Estilos</h2>
+            <button type="button" class="btn-inline edit-btn" data-section="styles" aria-controls="stylesModal">Editar</button>
+          </div>
+          <div class="section__content">
+            <div id="currentStyles" class="value"><%= (player.styles && player.styles.join(', ')) || '' %></div>
+          </div>
+        </section>
+
+        <!-- AÇÕES PRINCIPAIS -->
+        <section class="section" aria-label="Ações">
+          <div class="actions">
+            <button class="btn" id="saveAll" type="button"><span class="btn__dot" aria-hidden="true"></span>Salvar Alterações</button>
+            <button class="btn btn--ghost" id="cancelAll" type="button">Cancelar</button>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <!-- Coluna lateral -->
+    <aside class="sidebar">
+      <div class="sidebar__sticky">
+        <section class="card" aria-labelledby="resumo-title">
+          <h2 id="resumo-title" class="page__title" style="font-size:18px">Resumo</h2>
+          <div class="summary" style="margin-top:12px">
+            <div class="row">
+              <div class="label">Nome</div>
+              <div class="value" id="summaryName"><%= player.username || '' %></div>
+            </div>
+            <div class="row" style="margin-top:8px">
+              <div class="label">País</div>
+              <div class="value" id="summaryCountry"><%= player.country || '' %></div>
+            </div>
+            <div class="row" style="margin-top:8px">
+              <div class="label">Idiomas</div>
+              <div class="value" id="summaryLanguages"><%= (player.languages && player.languages.join(', ')) || '' %></div>
+            </div>
+            <div class="row" style="margin-top:8px">
+              <div class="label">Jogos</div>
+              <div class="value" id="summaryGames"><%= (player.games && player.games.join(', ')) || '' %></div>
+            </div>
+            <div class="row" style="margin-top:8px">
+              <div class="label">Plataformas</div>
+              <div class="value" id="summaryPlatforms"><%= (player.platforms && player.platforms.join(', ')) || '' %></div>
+            </div>
+            <div class="row" style="margin-top:8px">
+              <div class="label">Gêneros</div>
+              <div class="value" id="summaryGenres"><%= (player.genres && player.genres.join(', ')) || '' %></div>
+            </div>
+            <div class="row" style="margin-top:8px">
+              <div class="label">Estilos</div>
+              <div class="value" id="summaryStyles"><%= (player.styles && player.styles.join(', ')) || '' %></div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </aside>
+  </main>
+
+  <!-- ===================
+       MODAIS
+       =================== -->
+
+  <!-- Avatar -->
+  <div class="modal" id="avatarModal" role="dialog" aria-hidden="true" aria-labelledby="avatarModalTitle">
+    <div class="modal__content">
+      <div class="modal__header">
+        <h2 class="modal__title" id="avatarModalTitle">Selecionar Avatar</h2>
+        <button class="modal__close" id="closeAvatarModal" aria-label="Fechar">×</button>
+      </div>
+      <div class="avatar-grid" id="avatarGrid"></div>
+      <div class="actions" style="margin-top:12px">
+        <span class="label">Selecionado: <strong id="selectedAvatarName">—</strong></span>
+        <div style="margin-left:auto; display:flex; gap:8px">
+          <button class="btn btn--ghost" id="cancelAvatarModal" type="button">Cancelar</button>
+          <button class="btn" id="saveAvatar" type="button">Salvar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Nome & País -->
+  <div class="modal" id="nameCountryModal" role="dialog" aria-hidden="true" aria-labelledby="nameCountryModalTitle">
+    <div class="modal__content">
+      <div class="modal__header">
+        <h2 class="modal__title" id="nameCountryModalTitle">Nome & País</h2>
+        <button class="modal__close" id="closeNameCountryModal" aria-label="Fechar">×</button>
+      </div>
+      <form id="formNameCountry">
+        <label for="inputName" class="label">Nome</label>
+        <input id="inputName" class="input" type="text" placeholder="Seu nick no jogo" value="<%= player.username || '' %>"/>
+
+        <label for="inputCountry" class="label" style="margin-top:10px">País</label>
+        <input id="inputCountry" class="input" type="text" placeholder="Ex.: Brasil" value="<%= player.country || '' %>"/>
+
+        <div class="actions" style="margin-top:12px">
+          <button class="btn btn--ghost" id="cancelNameCountry" type="button">Cancelar</button>
+          <button class="btn" id="saveNameCountry" type="submit">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Idiomas -->
+  <div class="modal" id="languagesModal" role="dialog" aria-hidden="true" aria-labelledby="languagesModalTitle">
+    <div class="modal__content">
+      <div class="modal__header">
+        <h2 class="modal__title" id="languagesModalTitle">Idiomas</h2>
+        <button class="modal__close" id="closeLanguagesModal" aria-label="Fechar">×</button>
+      </div>
+      <div id="modalLanguagesChips" class="chips"></div>
+      <div class="actions" style="margin-top:12px">
+        <button class="btn btn--ghost" id="cancelLanguagesModal" type="button">Cancelar</button>
+        <button class="btn" id="saveLanguages" type="button">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Jogos -->
+  <div class="modal" id="gamesModal" role="dialog" aria-hidden="true" aria-labelledby="gamesModalTitle">
+    <div class="modal__content">
+      <div class="modal__header">
+        <h2 class="modal__title" id="gamesModalTitle">Jogos</h2>
+        <button class="modal__close" id="closeGamesModal" aria-label="Fechar">×</button>
+      </div>
+      <div id="modalGamesChips" class="chips"></div>
+      <div class="actions" style="margin-top:12px">
+        <button class="btn btn--ghost" id="cancelGamesModal" type="button">Cancelar</button>
+        <button class="btn" id="saveGames" type="button">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Plataformas -->
+  <div class="modal" id="platformsModal" role="dialog" aria-hidden="true" aria-labelledby="platformsModalTitle">
+    <div class="modal__content">
+      <div class="modal__header">
+        <h2 class="modal__title" id="platformsModalTitle">Plataformas</h2>
+        <button class="modal__close" id="closePlatformsModal" aria-label="Fechar">×</button>
+      </div>
+      <div id="modalPlatformsChips" class="chips"></div>
+      <div class="actions" style="margin-top:12px">
+        <button class="btn btn--ghost" id="cancelPlatformsModal" type="button">Cancelar</button>
+        <button class="btn" id="savePlatforms" type="button">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Gêneros -->
+  <div class="modal" id="genresModal" role="dialog" aria-hidden="true" aria-labelledby="genresModalTitle">
+    <div class="modal__content">
+      <div class="modal__header">
+        <h2 class="modal__title" id="genresModalTitle">Gêneros</h2>
+        <button class="modal__close" id="closeGenresModal" aria-label="Fechar">×</button>
+      </div>
+      <div id="modalGenresChips" class="chips"></div>
+      <div class="actions" style="margin-top:12px">
+        <button class="btn btn--ghost" id="cancelGenresModal" type="button">Cancelar</button>
+        <button class="btn" id="saveGenres" type="button">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Estilos -->
+  <div class="modal" id="stylesModal" role="dialog" aria-hidden="true" aria-labelledby="stylesModalTitle">
+    <div class="modal__content">
+      <div class="modal__header">
+        <h2 class="modal__title" id="stylesModalTitle">Estilos</h2>
+        <button class="modal__close" id="closeStylesModal" aria-label="Fechar">×</button>
+      </div>
+      <div id="modalStylesContainer" class="chips"></div>
+      <div class="actions" style="margin-top:12px">
+        <button class="btn btn--ghost" id="cancelStylesModal" type="button">Cancelar</button>
+        <button class="btn" id="saveStyles" type="button">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ===============================
+    // Estado inicial (a partir da View)
+    // ===============================
+    const languages = ['pt-BR','en','es','fr','de','ja','ko'];
+    const gamesList = ['Valorant','CS:GO 2','LoL','Dota 2','Fortnite','Apex Legends','PUBG','Overwatch','Minecraft','Rocket League','FIFA','CoD Warzone'];
+    const platformsList = ['PC','PlayStation','Xbox','Nintendo Switch','Mobile'];
+    const genresList = ['Ação','Aventura','RPG','Estratégia','Simulação','Esportes','Corrida','Terror','Puzzle'];
+    const styleOptions = ['Competitivo 🏆','Casual 🎮','FPS 🔫','MOBA 🐉','RPG ⚔️','Estratégia 🧠','Battle Royale 💣'];
+    const avatars = [
+      { value:'Ariel.png',  src:'/images/avatares_players/Ariel.png' },
+      { value:'Mino.png',   src:'/images/avatares_players/Mino.png' },
+      { value:'Rukia.png',  src:'/images/avatares_players/Rukia.png' },
+      { value:'Kenji.png',  src:'/images/avatares_players/Kenji.png' },
+      { value:'Luna.png',   src:'/images/avatares_players/Luna.png' },
+      { value:'Kaori.png',  src:'/images/avatares_players/Kaori.png' },
+      { value:'Zoro.png',   src:'/images/avatares_players/Zoro.png' },
+      { value:'Hikari.png', src:'/images/avatares_players/Hikari.png' },
+    ];
+
+    // ===============================
+    // Seletores (IDs preservados)
+    // ===============================
+    const currentAvatar = document.getElementById('currentAvatar');
+    const currentAvatarName = document.getElementById('currentAvatarName');
+    const currentName = document.getElementById('currentName');
+    const currentCountry = document.getElementById('currentCountry');
+    const currentLanguages = document.getElementById('currentLanguages');
+    const currentGames = document.getElementById('currentGames');
+    const currentPlatforms = document.getElementById('currentPlatforms');
+    const currentGenres = document.getElementById('currentGenres');
+    const currentStyles = document.getElementById('currentStyles');
+
+    const summaryName = document.getElementById('summaryName');
+    const summaryCountry = document.getElementById('summaryCountry');
+    const summaryLanguages = document.getElementById('summaryLanguages');
+    const summaryGames = document.getElementById('summaryGames');
+    const summaryPlatforms = document.getElementById('summaryPlatforms');
+    const summaryGenres = document.getElementById('summaryGenres');
+    const summaryStyles = document.getElementById('summaryStyles');
+
+    // Modais e componentes internos
+    const avatarModal = document.getElementById('avatarModal');
+    const closeAvatarModal = document.getElementById('closeAvatarModal');
+    const cancelAvatarModal = document.getElementById('cancelAvatarModal');
+    const saveAvatar = document.getElementById('saveAvatar');
+    const avatarGrid = document.getElementById('avatarGrid');
+    const selectedAvatarName = document.getElementById('selectedAvatarName');
+
+    const nameCountryModal = document.getElementById('nameCountryModal');
+    const closeNameCountryModal = document.getElementById('closeNameCountryModal');
+    const cancelNameCountry = document.getElementById('cancelNameCountry');
+    const saveNameCountry = document.getElementById('saveNameCountry');
+    const formNameCountry = document.getElementById('formNameCountry');
+    const inputName = document.getElementById('inputName');
+    const inputCountry = document.getElementById('inputCountry');
+
+    const languagesModal = document.getElementById('languagesModal');
+    const closeLanguagesModal = document.getElementById('closeLanguagesModal');
+    const cancelLanguagesModal = document.getElementById('cancelLanguagesModal');
+    const saveLanguages = document.getElementById('saveLanguages');
+    const modalLanguagesChips = document.getElementById('modalLanguagesChips');
+
+    const gamesModal = document.getElementById('gamesModal');
+    const closeGamesModal = document.getElementById('closeGamesModal');
+    const cancelGamesModal = document.getElementById('cancelGamesModal');
+    const saveGames = document.getElementById('saveGames');
+    const modalGamesChips = document.getElementById('modalGamesChips');
+
+    const platformsModal = document.getElementById('platformsModal');
+    const closePlatformsModal = document.getElementById('closePlatformsModal');
+    const cancelPlatformsModal = document.getElementById('cancelPlatformsModal');
+    const savePlatforms = document.getElementById('savePlatforms');
+    const modalPlatformsChips = document.getElementById('modalPlatformsChips');
+
+    const genresModal = document.getElementById('genresModal');
+    const closeGenresModal = document.getElementById('closeGenresModal');
+    const cancelGenresModal = document.getElementById('cancelGenresModal');
+    const saveGenres = document.getElementById('saveGenres');
+    const modalGenresChips = document.getElementById('modalGenresChips');
+
+    const stylesModal = document.getElementById('stylesModal');
+    const closeStylesModal = document.getElementById('closeStylesModal');
+    const cancelStylesModal = document.getElementById('cancelStylesModal');
+    const saveStyles = document.getElementById('saveStyles');
+    const modalStylesContainer = document.getElementById('modalStylesContainer');
+
+    const saveAll = document.getElementById('saveAll');
+    const cancelAll = document.getElementById('cancelAll');
+
+    // ===============================
+    // Estado
+    // ===============================
+    let state = {
+      avatar: currentAvatar?.src || '',
+      avatarName: currentAvatarName?.textContent?.trim() || 'Ariel',
+      name: currentName?.textContent?.trim() || '',
+      country: currentCountry?.textContent?.trim() || '',
+      languages: (currentLanguages?.textContent?.trim() || '').split(',').map(s=>s.trim()).filter(Boolean),
+      games: (currentGames?.textContent?.trim() || '').split(',').map(s=>s.trim()).filter(Boolean),
+      platforms: (currentPlatforms?.textContent?.trim() || '').split(',').map(s=>s.trim()).filter(Boolean),
+      genres: (currentGenres?.textContent?.trim() || '').split(',').map(s=>s.trim()).filter(Boolean),
+      styles: (currentStyles?.textContent?.trim() || '').split(',').map(s=>s.trim()).filter(Boolean),
+    };
+
+    function refreshSummary(){
+      summaryName.textContent = state.name || '';
+      summaryCountry.textContent = state.country || '';
+      summaryLanguages.textContent = state.languages.join(', ');
+      summaryGames.textContent = state.games.join(', ');
+      summaryPlatforms.textContent = state.platforms.join(', ');
+      summaryGenres.textContent = state.genres.join(', ');
+      summaryStyles.textContent = state.styles.join(', ');
+    }
+    refreshSummary();
+
+    // ===============================
+    // Helpers
+    // ===============================
+    function openModal(m){ if(!m) return; m.style.display='flex'; m.setAttribute('aria-hidden','false'); }
+    function closeModal(m){ if(!m) return; m.style.display='none'; m.setAttribute('aria-hidden','true'); }
+    function $$(sel, root=document){ return Array.from(root.querySelectorAll(sel)); }
+    function createChip(label, selected=false){
+      const el = document.createElement('span');
+      el.className = 'chip' + (selected ? ' selected' : '');
+      el.textContent = label;
+      el.tabIndex = 0;
+      el.setAttribute('role','button');
+      el.setAttribute('aria-pressed', selected ? 'true':'false');
+      el.addEventListener('click', () => {
+        const isSel = el.classList.toggle('selected');
+        el.setAttribute('aria-pressed', isSel ? 'true':'false');
+      });
+      return el;
+    }
+
+    // ===============================
+    // Avatar
+    // ===============================
+    function populateModalAvatars(){
+      avatarGrid.innerHTML = '';
+      avatars.forEach(({ value, src }) => {
+        const wrap = document.createElement('div');
+        wrap.className = 'avatar' + (state.avatar?.includes(value) ? ' selected' : '');
+        const img = document.createElement('img');
+        img.src = src;
+        img.alt = value.replace(/\.(png|jpg|jpeg|webp)$/,'');
+        wrap.appendChild(img);
+        wrap.addEventListener('click', () => {
+          $$('.avatar', avatarGrid).forEach(a => a.classList.remove('selected'));
+          wrap.classList.add('selected');
+          state.avatar = src;
+          state.avatarName = value.replace(/\.(png|jpg|jpeg|webp)$/,'');
+          selectedAvatarName.textContent = state.avatarName;
+        });
+        avatarGrid.appendChild(wrap);
+      });
+      selectedAvatarName.textContent = state.avatarName || '—';
+    }
+
+    function prePopulateNameCountry(){
+      inputName.value = state.name || '';
+      inputCountry.value = state.country || '';
+    }
+
+    function populateChips(container, items, selectedSet){
+      container.innerHTML = '';
+      items.forEach(item => container.appendChild(createChip(item, selectedSet.has(item))));
+    }
+
+    // ===============================
+    // Listeners dos botões "Editar"
+    // ===============================
+    $$('.edit-btn').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const section = btn.dataset.section;
+        switch(section){
+          case 'avatar':
+            populateModalAvatars();
+            openModal(avatarModal); break;
+          case 'name-country':
+            prePopulateNameCountry();
+            openModal(nameCountryModal); break;
+          case 'languages':
+            populateChips(modalLanguagesChips, languages, new Set(state.languages));
+            openModal(languagesModal); break;
+          case 'games':
+            populateChips(modalGamesChips, gamesList, new Set(state.games));
+            openModal(gamesModal); break;
+          case 'platforms':
+            populateChips(modalPlatformsChips, platformsList, new Set(state.platforms));
+            openModal(platformsModal); break;
+          case 'genres':
+            populateChips(modalGenresChips, genresList, new Set(state.genres));
+            openModal(genresModal); break;
+          case 'styles':
+            modalStylesContainer.innerHTML = '';
+            styleOptions.forEach(opt=>{
+              const box = document.createElement('label');
+              box.className = 'chip' + (state.styles.includes(opt) ? ' selected':'');
+              const input = document.createElement('input');
+              input.type = 'checkbox';
+              input.value = opt;
+              input.checked = state.styles.includes(opt);
+              input.style.display = 'none';
+              box.appendChild(input);
+              box.appendChild(document.createTextNode(opt));
+              box.addEventListener('click', (e)=>{
+                if(e.target === input) return;
+                input.checked = !input.checked;
+                box.classList.toggle('selected', input.checked);
+              });
+              modalStylesContainer.appendChild(box);
+            });
+            openModal(stylesModal); break;
+        }
+      });
+    });
+
+    // ===============================
+    // Fechar/Cancelar modais
+    // ===============================
+    ;[closeAvatarModal, cancelAvatarModal].forEach(el=> el?.addEventListener('click', ()=> closeModal(avatarModal)));
+    ;[closeNameCountryModal, cancelNameCountry].forEach(el=> el?.addEventListener('click', ()=> closeModal(nameCountryModal)));
+    ;[closeLanguagesModal, cancelLanguagesModal].forEach(el=> el?.addEventListener('click', ()=> closeModal(languagesModal)));
+    ;[closeGamesModal, cancelGamesModal].forEach(el=> el?.addEventListener('click', ()=> closeModal(gamesModal)));
+    ;[closePlatformsModal, cancelPlatformsModal].forEach(el=> el?.addEventListener('click', ()=> closeModal(platformsModal)));
+    ;[closeGenresModal, cancelGenresModal].forEach(el=> el?.addEventListener('click', ()=> closeModal(genresModal)));
+    ;[closeStylesModal, cancelStylesModal].forEach(el=> el?.addEventListener('click', ()=> closeModal(stylesModal)));
+
+    // ===============================
+    // Saves
+    // ===============================
+    saveAvatar?.addEventListener('click', ()=>{
+      currentAvatar.src = state.avatar;
+      currentAvatarName.textContent = state.avatarName || '—';
+      refreshSummary();
+      closeModal(avatarModal);
+    });
+
+    formNameCountry?.addEventListener('submit', (e)=>{
+      e.preventDefault();
+      state.name = inputName.value.trim();
+      state.country = inputCountry.value.trim();
+      currentName.textContent = state.name || '';
+      currentCountry.textContent = state.country || '';
+      refreshSummary();
+      closeModal(nameCountryModal);
+    });
+
+    saveLanguages?.addEventListener('click', ()=>{
+      const selected = Array.from(languagesModal.querySelectorAll('.chip.selected')).map(ch=>ch.textContent);
+      state.languages = selected;
+      currentLanguages.textContent = selected.join(', ');
+      refreshSummary();
+      closeModal(languagesModal);
+    });
+
+    saveGames?.addEventListener('click', ()=>{
+      const selected = Array.from(gamesModal.querySelectorAll('.chip.selected')).map(ch=>ch.textContent);
+      state.games = selected;
+      currentGames.textContent = selected.join(', ');
+      refreshSummary();
+      closeModal(gamesModal);
+    });
+
+    savePlatforms?.addEventListener('click', ()=>{
+      const selected = Array.from(platformsModal.querySelectorAll('.chip.selected')).map(ch=>ch.textContent);
+      state.platforms = selected;
+      currentPlatforms.textContent = selected.join(', ');
+      refreshSummary();
+      closeModal(platformsModal);
+    });
+
+    saveGenres?.addEventListener('click', ()=>{
+      const selected = Array.from(genresModal.querySelectorAll('.chip.selected')).map(ch=>ch.textContent);
+      state.genres = selected;
+      currentGenres.textContent = selected.join(', ');
+      refreshSummary();
+      closeModal(genresModal);
+    });
+
+    saveStyles?.addEventListener('click', ()=>{
+      const selected = Array.from(stylesModal.querySelectorAll('input[type="checkbox"]:checked')).map(i=>i.value);
+      state.styles = selected;
+      currentStyles.textContent = selected.join(', ');
+      refreshSummary();
+      closeModal(stylesModal);
+    });
+
+    // ===============================
+    // Ações principais
+    // ===============================
+    cancelAll?.addEventListener('click', ()=>{
+      // NOTE: Guard simples para não quebrar fluxo
+      if (window.history.length > 1) window.history.back();
+    });
+
+    saveAll?.addEventListener('click', async ()=>{
+      try{
+        console.log('[profile-edit] Salvando perfil…', state);
+        saveAll.disabled = true; const txt = saveAll.textContent; saveAll.textContent = 'Salvando…';
+        // TODO: integrar com rota/endpoint real
+        await new Promise(r=>setTimeout(r, 600));
+        saveAll.textContent = 'Salvo!';
+        refreshSummary();
+        setTimeout(()=>{ saveAll.textContent = txt; saveAll.disabled = false; }, 900);
+      }catch(err){
+        console.error('[profile-edit] Erro ao salvar:', err);
+        alert('Falha ao salvar. Tente novamente.');
+        saveAll.disabled = false;
+      }
+    });
+
+    // ===============================
+    // Acessibilidade
+    // ===============================
+    window.addEventListener('keydown', (e)=>{
+      if(e.key === 'Escape'){
+        [avatarModal,nameCountryModal,languagesModal,gamesModal,platformsModal,genresModal,stylesModal]
+          .forEach(m => m && m.style.display === 'flex' && (m.style.display='none', m.setAttribute('aria-hidden','true')));
+      }
+    });
+  </script>
+</body>
+</html>

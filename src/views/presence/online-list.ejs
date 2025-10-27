@@ -1,0 +1,33 @@
+<!-- src/views/presence/online-list.ejs -->
+<div class="presence-widget max-h-80 w-64 overflow-y-auto rounded-xl bg-white shadow-lg border border-slate-200 text-left">
+  <% if (players && players.length) { %>
+    <ul class="divide-y divide-slate-100">
+      <% players.forEach((p) => { %>
+        <li class="flex items-center gap-3 px-3 py-2 hover:bg-slate-50 transition">
+          <img
+            src="<%= p.photoUrl || '/default-avatar.png' %>"
+            alt="avatar"
+            class="h-8 w-8 rounded-full object-cover border border-slate-200"
+          />
+          <div class="flex-1">
+            <p class="font-medium text-sm text-slate-800 truncate"><%= p.name || 'Jogador' %></p>
+            <% if (p.favoriteGameIds && p.favoriteGameIds.length) { %>
+              <p class="text-xs text-slate-500 truncate">
+                🎮 <%= p.favoriteGameIds.slice(0, 2).join(', ') %>
+              </p>
+            <% } else if (p.platforms && p.platforms.length) { %>
+              <p class="text-xs text-slate-500 truncate">
+                💻 <%= p.platforms.join(', ') %>
+              </p>
+            <% } else { %>
+              <p class="text-xs text-slate-400">Online agora</p>
+            <% } %>
+          </div>
+          <div class="h-2 w-2 bg-green-500 rounded-full" title="Online"></div>
+        </li>
+      <% }) %>
+    </ul>
+  <% } else { %>
+    <div class="p-3 text-sm text-slate-500 text-center">Nenhum jogador online agora.</div>
+  <% } %>
+</div>
