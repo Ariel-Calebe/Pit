@@ -34,6 +34,12 @@ export class ProfileService {
     return this.repo.getByUid(uid);
   }
 
+  /** Retorna o perfil de qualquer jogador (por UID) */
+  async getByUid(uid: string): Promise<Player | null> {
+    if (!uid) throw new Error('missing_uid');
+    return this.repo.getByUid(uid);
+  }
+
   /** Atualiza campos do perfil com validações de negócio */
   async update(input: ProfileUpdateInput): Promise<Player> {
     if (!input?.uid) throw new Error('missing_uid');

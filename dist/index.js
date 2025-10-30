@@ -81,7 +81,7 @@ app.use(cors({
     },
 }));
 /* ------------------------ Parsers & cookies ------------------------ */
-app.use(express.urlencoded({ planlimit: '1mb', extended: true })); // TS: option cast para manter compat
+app.use(express.urlencoded({ limit: '1mb', extended: true })); // TS: option cast para manter compat
 app.use(express.json({ limit: '5mb' }));
 app.use(cookieParser());
 /* ------------------------ Rotas ------------------------ */

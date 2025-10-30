@@ -13,6 +13,7 @@ export class CallRepositoryFirebase {
             id,
             ownerUid: data.ownerUid,
             title: data.title,
+            description: data.description,
             gameId: data.gameId,
             platform: data.platform,
             participants: [data.ownerUid],
@@ -44,22 +45,72 @@ export class CallRepositoryFirebase {
         let calls = snap.docs.map((d) => {
             const data = d.data();
             return {
-                ...data,
+                id: data.id,
+                ownerUid: data.ownerUid,
+                title: data.title,
+                description: data.description || undefined,
+                gameId: data.gameId,
+                platform: data.platform,
+                participants: data.participants || [],
+                status: data.status || 'open',
                 callFriendly: data.callFriendly || 'friendly',
-                playstyles: data.playstyles || []
+                playstyles: data.playstyles || [],
+                createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : data.createdAt,
+                updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : data.updatedAt,
             };
         });
         // Apply client-side search filtering if search term is provided
         if (filters?.search && filters.search.trim()) {
             const searchTerm = filters.search.trim().toLowerCase();
             calls = calls.filter(call => call.title.toLowerCase().includes(searchTerm) ||
-                call.gameId.toLowerCase().includes(searchTerm));
+                call.gameId.toLowerCase().includes(searchTerm) ||
+                (call.description && call.description.toLowerCase().includes(searchTerm)));
         }
         return calls;
     }
     async getById(id) {
         const doc = await this.col.doc(id).get();
-        return doc.exists ? doc.data() : null;
+        if (!doc.exists)
+            return null;
+        const data = doc.data();
+        return {
+            id: data.id,
+            ownerUid: data.ownerUid,
+            title: data.title,
+            description: data.description || undefined,
+            gameId: data.gameId,
+            platform: data.platform,
+            participants: data.participants || [],
+            status: data.status,
+            callFriendly: data.callFriendly || 'friendly',
+            playstyles: data.playstyles || [],
+            createdAt: data.createdAt?.toDate() || data.createdAt,
+            updatedAt: data.updatedAt?.toDate() || data.updatedAt,
+        };
+    }
+    async getActiveCallByUser(uid) {
+        const snap = await this.col
+            .where('status', '==', 'open')
+            .where('participants', 'array-contains', uid)
+            .limit(1)
+            .get();
+        if (snap.empty)
+            return null;
+        const data = snap.docs[0].data();
+        return {
+            id: data.id,
+            ownerUid: data.ownerUid,
+            title: data.title,
+            description: data.description || undefined,
+            gameId: data.gameId,
+            platform: data.platform,
+            participants: data.participants || [],
+            status: data.status,
+            callFriendly: data.callFriendly || 'friendly',
+            playstyles: data.playstyles || [],
+            createdAt: data.createdAt?.toDate() || data.createdAt,
+            updatedAt: data.updatedAt?.toDate() || data.updatedAt,
+        };
     }
     async join(callId, uid) {
         const ref = this.col.doc(callId);

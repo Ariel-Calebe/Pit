@@ -4,9 +4,50 @@
  */
 export class ProfileController {
     svc;
-    constructor(svc) {
+    amigoSvc;
+    blockSvc;
+    constructor(svc, amigoSvc, blockSvc) {
         this.svc = svc;
+        this.amigoSvc = amigoSvc;
+        this.blockSvc = blockSvc;
     }
+    /** Renderiza o perfil de outro jogador (visualização) */
+    view = async (req, res) => {
+        try {
+            const { uid: targetUid } = req.params;
+            const currentUid = req.uid;
+            // Verifica se o usuário está bloqueado
+            if (this.blockSvc) {
+                const isBlocked = await this.blockSvc.isBlocked(currentUid, targetUid);
+                if (isBlocked) {
+                    return res.status(403).render('error', {
+                        title: 'Acesso Negado',
+                        message: 'Você bloqueou este usuário e não pode visualizar o perfil dele.',
+                    });
+                }
+            }
+            const targetPlayer = await this.svc.getByUid(targetUid);
+            if (!targetPlayer)
+                return res.status(404).send('Perfil não encontrado');
+            // Verifica se já são amigos
+            const currentFriends = await this.amigoSvc.listFriends(currentUid);
+            const isAlreadyFriend = currentFriends.includes(targetUid);
+            res.render('profile-view', {
+                title: targetPlayer.name || 'Perfil',
+                subtitle: '',
+                player: targetPlayer,
+                currentPlayer: {
+                    id: currentUid,
+                    authUid: currentUid
+                },
+                isAlreadyFriend
+            });
+        }
+        catch (e) {
+            console.error('[profile_view_error]', e?.message || e);
+            return res.redirect('/home?error=profile_load');
+        }
+    };
     /** Renderiza o formulário de edição com os dados atuais */
     editForm = async (req, res) => {
         try {

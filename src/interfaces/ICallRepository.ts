@@ -7,6 +7,7 @@ import { Call } from '../models/Call';
 export interface CreateCallInput {
   ownerUid: string;    // ID do criador do chamado
   title: string;       // Título do chamado
+  description?: string; // Descrição opcional do chamado
   gameId: string;      // ID do jogo (ex: "valorant")
   platform: string;    // Plataforma (ex: "pc", "playstation")
   callFriendly: 'friendly' | 'competitive'; // Tipo de chamado (amigável ou competitivo)
@@ -36,6 +37,9 @@ export interface ICallRepository {
 
   /** Busca um chamado pelo ID. */
   getById(id: string): Promise<Call | null>;
+
+  /** Busca o chamado ativo de um usuário (se está participando). */
+  getActiveCallByUser(uid: string): Promise<Call | null>;
 
   /** Adiciona um jogador a um chamado. */
   join(callId: string, uid: string): Promise<Call>;

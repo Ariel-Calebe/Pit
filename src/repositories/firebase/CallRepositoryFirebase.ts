@@ -10,6 +10,7 @@ export interface Call {
   id: string;
   ownerUid: string;
   title: string;
+  description?: string;
   gameId: string;
   platform: string;
   participants: string[];
@@ -26,6 +27,7 @@ export interface Call {
 export interface CreateCallInput {
   ownerUid: string;
   title: string;
+  description?: string;
   gameId: string;
   platform: string;
   callFriendly: 'friendly' | 'competitive';
@@ -39,6 +41,7 @@ export interface ICallRepository {
   create(data: CreateCallInput): Promise<Call>;
   listOpen(limit?: number, filters?: ListOpenFilters): Promise<Call[]>;
   getById(id: string): Promise<Call | null>;
+  getActiveCallByUser(uid: string): Promise<Call | null>;
   join(callId: string, uid: string): Promise<Call>;
   close(callId: string, ownerUid: string): Promise<Call>;
   removeParticipant(callId: string, participantUid: string): Promise<Call>;
@@ -57,6 +60,7 @@ export class CallRepositoryFirebase implements ICallRepository {
       id,
       ownerUid: data.ownerUid,
       title: data.title,
+      description: data.description,
       gameId: data.gameId,
       platform: data.platform,
       participants: [data.ownerUid],
@@ -94,9 +98,18 @@ export class CallRepositoryFirebase implements ICallRepository {
     let calls = snap.docs.map((d) => {
       const data = d.data() as any;
       return {
-        ...data,
+        id: data.id,
+        ownerUid: data.ownerUid,
+        title: data.title,
+        description: data.description || undefined,
+        gameId: data.gameId,
+        platform: data.platform,
+        participants: data.participants || [],
+        status: data.status || 'open',
         callFriendly: data.callFriendly || 'friendly',
-        playstyles: data.playstyles || []
+        playstyles: data.playstyles || [],
+        createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : data.createdAt,
+        updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : data.updatedAt,
       } as Call;
     });
 
@@ -105,7 +118,8 @@ export class CallRepositoryFirebase implements ICallRepository {
       const searchTerm = filters.search.trim().toLowerCase();
       calls = calls.filter(call =>
         call.title.toLowerCase().includes(searchTerm) ||
-        call.gameId.toLowerCase().includes(searchTerm)
+        call.gameId.toLowerCase().includes(searchTerm) ||
+        (call.description && call.description.toLowerCase().includes(searchTerm))
       );
     }
 
@@ -114,7 +128,49 @@ export class CallRepositoryFirebase implements ICallRepository {
 
   async getById(id: string): Promise<Call | null> {
     const doc = await this.col.doc(id).get();
-    return doc.exists ? (doc.data() as Call) : null;
+    if (!doc.exists) return null;
+    
+    const data = doc.data() as any;
+    return {
+      id: data.id,
+      ownerUid: data.ownerUid,
+      title: data.title,
+      description: data.description || undefined,
+      gameId: data.gameId,
+      platform: data.platform,
+      participants: data.participants || [],
+      status: data.status,
+      callFriendly: data.callFriendly || 'friendly',
+      playstyles: data.playstyles || [],
+      createdAt: data.createdAt?.toDate() || data.createdAt,
+      updatedAt: data.updatedAt?.toDate() || data.updatedAt,
+    } as Call;
+  }
+
+  async getActiveCallByUser(uid: string): Promise<Call | null> {
+    const snap = await this.col
+      .where('status', '==', 'open')
+      .where('participants', 'array-contains', uid)
+      .limit(1)
+      .get();
+    
+    if (snap.empty) return null;
+    
+    const data = snap.docs[0].data() as any;
+    return {
+      id: data.id,
+      ownerUid: data.ownerUid,
+      title: data.title,
+      description: data.description || undefined,
+      gameId: data.gameId,
+      platform: data.platform,
+      participants: data.participants || [],
+      status: data.status,
+      callFriendly: data.callFriendly || 'friendly',
+      playstyles: data.playstyles || [],
+      createdAt: data.createdAt?.toDate() || data.createdAt,
+      updatedAt: data.updatedAt?.toDate() || data.updatedAt,
+    } as Call;
   }
 
   async join(callId: string, uid: string): Promise<Call> {

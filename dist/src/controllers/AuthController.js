@@ -19,7 +19,7 @@ export class AuthController {
         const acc = String(req.headers['accept'] || '');
         return ct.includes('application/x-www-form-urlencoded') || acc.includes('text/html');
     }
-    // POST /auth/signup
+    // POST /signup
     signUp = async (req, res) => {
         try {
             const player = await this.svc.signUp(req.body);
@@ -39,7 +39,7 @@ export class AuthController {
             return res.status(400).json({ error: code });
         }
     };
-    // POST /auth/login
+    // POST /login
     login = async (req, res) => {
         try {
             const { email, password } = req.body ?? {};

@@ -11,6 +11,7 @@ export type Call = {
   id: string;                  // ID do chamado (gerado automaticamente)
   ownerUid: string;            // ID do usuário dono do chamado
   title: string;               // Título do chamado (ex: "Ranked Duo")
+  description?: string;         // Descrição opcional do chamado
   gameId: string;              // ID do jogo (ex: "valorant")
   platform: string;            // Plataforma (ex: "pc", "playstation")
   participants: string[];      // IDs dos participantes (inclui o dono)

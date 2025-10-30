@@ -5,7 +5,7 @@
   ✔ Fundo sólido 100%
   ✔ Apenas um card centralizado
   ✔ Logo centralizada acima do card
-  ✔ Sem “Esqueceu a senha?”
+  ✔ Sem "Esqueceu a senha?"
   ✔ Botão Google preservado porém oculto
   ✔ Fallback inteligente para caminhos da imagem (tenta múltiplos paths comuns)
 -->
@@ -151,23 +151,77 @@
 
   .mini{margin-top:14px;text-align:center;color:var(--txt-field);font-size:.9rem;}
 
+  .register-link {
+    text-align: center;
+    margin-top: 16px;
+    color: var(--txt-field);
+    font-size: .9rem;
+  }
+  .register-link a {
+    color: var(--g-main);
+    text-decoration: none;
+    font-weight: 600;
+  }
+  .register-link a:hover {
+    text-decoration: underline;
+  }
+
   @media (min-width:760px){
     .login-wrapper{width:min(500px,92vw);}
     .login-logo{width:160px;}
     .logo-fallback{width:180px;height:48px;}
   }
+
+  /* Alertas de erro */
+  .alert {
+    padding: 14px 16px;
+    border-radius: 10px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    animation: slideDown 0.3s ease-out;
+  }
+
+  .alert--error {
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    color: #fca5a5;
+  }
+
+  .alert--warning {
+    background: rgba(245, 158, 11, 0.15);
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    color: #fcd34d;
+  }
+
+  .alert-content {
+    font-size: 0.93rem;
+    line-height: 1.5;
+  }
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
 </style>
 
 <!-- Fundo e card único -->
 <div class="login-overlay">
-  <!-- 
+  <!--
     LOGO centralizada com fallback de caminho:
     1) Tenta o caminho fornecido por você: /src/views/images/couplogo.png
     2) Se falhar, tenta /images/couplogo.png (pasta 'public/images' do Express)
     3) Se ainda falhar, tenta images/couplogo.png (relativo)
     4) Exibe um bloco placeholder "Co-Up"
   -->
-  <img 
+  <img
     id="appLogo"
     src="/src/views/images/couplogo.png"
     alt="Logo Co-Up"
@@ -178,8 +232,8 @@
   <div id="logoFallback" class="logo-fallback">Co-Up</div>
 
   <div class="login-wrapper">
-    <div class="login-card" role="dialog" aria-labelledby="titulo-login" aria-describedby="descricao-login">ds
-      
+    <div class="login-card" role="dialog" aria-labelledby="titulo-login" aria-describedby="descricao-login">
+
       <!-- Títulos -->
       <div class="title">
         <span id="titulo-login" class="t1">Bem Vindo de volta!</span>
@@ -187,7 +241,15 @@
       </div>
 
       <!-- Formulário -->
-      <form id="loginForm" action="/auth/login" method="POST" novalidate>
+      <form id="loginForm" action="/login" method="POST" novalidate>
+        
+        <!-- Alerta de erro -->
+        <% if (error) { %>
+          <div id="errorAlert" class="alert alert--error">
+            <div class="alert-content"></div>
+          </div>
+        <% } %>
+
         <!-- E-mail -->
         <div class="field">
           <svg class="field__icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -200,7 +262,7 @@
         <div class="field">
           <svg class="field__icon" viewBox="0 0 24 24" aria-hidden="true">
             <path fill="currentColor" d="M12 1a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v8c0 1.1.9 2 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5Zm-3 8V6a3 3 0 0 1 6 0v3H9Z"/>
-        </svg>
+          </svg>
           <input class="input" id="password" name="password" type="password" placeholder="Senha" autocomplete="current-password" required />
         </div>
 
@@ -218,6 +280,10 @@
           Entrar com Google
         </button>
       </form>
+
+      <div class="register-link">
+        Não tem uma conta? <a href="/signup">Cadastre-se</a>
+      </div>
 
       <div class="mini">Protegido • Co-Up</div>
     </div>
@@ -256,6 +322,37 @@
     // dispara teste inicial se a primeira URL não carregar rápido
     // (se a primeira já for válida, esse listener não atrapalha)
     // nada a fazer aqui; a primeira já está definida na marcação
+  })();
+
+  // Mapeamento de erros para mensagens amigáveis
+  const errorMessages = {
+    // Erros de Login
+    'auth/user-not-found': 'E-mail não cadastrado. Verifique o e-mail ou crie uma conta.',
+    'auth/wrong-password': 'Senha incorreta. Tente novamente ou recupere sua senha.',
+    'auth/invalid-login-credentials': 'E-mail ou senha incorretos. Verifique suas credenciais.',
+    'auth/user-disabled': 'Sua conta foi desabilitada. Entre em contato com o suporte.',
+    'auth/invalid-email': 'Formato de e-mail inválido.',
+    'auth/too-many-requests': 'Muitas tentativas. Tente novamente mais tarde.',
+    'auth/internal-error': 'Erro interno do servidor. Tente novamente em alguns instantes.',
+    'missing_credentials': 'Por favor, preencha e-mail e senha.',
+    'invalid_credentials': 'Credenciais inválidas. Verifique e-mail e senha.',
+    
+    // Fallback
+    'login': 'Erro ao fazer login. Tente novamente.',
+    'login_error': 'Erro ao fazer login. Tente novamente.',
+  };
+
+  // Exibir erro se houver
+  (function displayError() {
+    <% if (error && code) { %>
+      const errorAlert = document.getElementById('errorAlert');
+      if (errorAlert) {
+        const errorCode = '<%= code %>';
+        const errorMessage = errorMessages[errorCode] || errorMessages['login'] || 'Erro desconhecido';
+        errorAlert.querySelector('.alert-content').textContent = errorMessage;
+        errorAlert.style.display = 'flex';
+      }
+    <% } %>
   })();
 
   (function () {

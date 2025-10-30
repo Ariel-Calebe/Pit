@@ -40,16 +40,23 @@ export class EditProfileRepositoryFirebase implements IEditProfileRepository {
     const snap = await ref.get();
     if (!snap.exists) throw new Error('player_not_found');
 
-    const updates = clean({
-      name: input.name?.trim(),
-      photoUrl: input.photoUrl,
-      avatar: input.avatar,
-      languages: normStringArray(input.languages),
-      platforms: normPlatforms(input.platforms),
-      favoriteGameIds: normStringArray(input.favoriteGameIds),
-      favoriteGenres: normStringArray(input.favoriteGenres),
+    // Build updates object explicitly to allow empty arrays
+    const updates: any = {
       updatedAt: new Date(),
-    });
+    };
+
+    // Add fields only if they are explicitly provided (not undefined)
+    if (input.name !== undefined) updates.name = input.name?.trim() || '';
+    if (input.country !== undefined) updates.country = input.country;
+    if (input.photoUrl !== undefined) updates.photoUrl = input.photoUrl;
+    if (input.avatar !== undefined) updates.avatar = input.avatar;
+    if (input.languages !== undefined) updates.languages = normStringArray(input.languages) || [];
+    if (input.platforms !== undefined) updates.platforms = normPlatforms(input.platforms) || [];
+    if (input.favoriteGameIds !== undefined) updates.favoriteGameIds = normStringArray(input.favoriteGameIds) || [];
+    if (input.favoriteGenres !== undefined) updates.favoriteGenres = normStringArray(input.favoriteGenres) || [];
+    if (input.styles !== undefined) updates.styles = normStringArray(input.styles) || [];
+
+    console.log('[EditProfileRepository] Saving updates:', updates);
 
     await ref.set(updates, { merge: true });
     const after = await ref.get();

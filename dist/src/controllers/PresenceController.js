@@ -2,8 +2,10 @@ import { adminDb } from '../config/firebaseAdmin.js';
 import { PLAYERS_COLLECTION } from '../models/Player.js';
 export class PresenceController {
     svc;
-    constructor(svc) {
+    blockSvc;
+    constructor(svc, blockSvc) {
         this.svc = svc;
+        this.blockSvc = blockSvc;
     }
     /** Detecta se a resposta esperada é HTML (para particionar entre render e JSON). */
     wantsHTML(req) {
@@ -95,8 +97,15 @@ export class PresenceController {
     /** Lista usuários online (JSON por padrão; render opcional de partial EJS). */
     listOnline = async (req, res) => {
         try {
+            const uid = req.uid;
             const limit = Number(req.query.limit ?? 20);
-            const records = await this.svc.listOnline(limit);
+            let records = await this.svc.listOnline(limit);
+            // Filtra usuários bloqueados
+            if (this.blockSvc) {
+                const blockedUids = await this.blockSvc.listBlockedBy(uid);
+                const blockedSet = new Set(blockedUids);
+                records = records.filter(r => r.uid && !blockedSet.has(r.uid));
+            }
             if (this.wantsHTML(req)) {
                 return res.render('presence/online-list', {
                     title: 'Jogadores online',
@@ -115,7 +124,7 @@ export class PresenceController {
         try {
             const uid = req.uid;
             const limit = Number(req.query.limit ?? 12);
-            const records = await this.svc.listSimilarOnline({
+            let records = await this.svc.listSimilarOnline({
                 uid,
                 limit,
                 byGames: req.query.byGames !== 'false',
@@ -124,6 +133,12 @@ export class PresenceController {
                 byCountry: req.query.byCountry === 'true',
                 byLanguages: req.query.byLanguages === 'true',
             });
+            // Filtra usuários bloqueados
+            if (this.blockSvc) {
+                const blockedUids = await this.blockSvc.listBlockedBy(uid);
+                const blockedSet = new Set(blockedUids);
+                records = records.filter(r => r.uid && !blockedSet.has(r.uid));
+            }
             if (this.wantsHTML(req)) {
                 return res.render('presence/similar-list', {
                     title: 'Jogadores parecidos (online)',

@@ -30,6 +30,14 @@ import { NotificationRepositoryFirebase } from './repositories/firebase/Notifica
 import { NotificationService } from './services/NotificationService.js';
 import { NotificationController } from './controllers/NotificationController.js';
 
+import { ProfileRepositoryFirebase } from './repositories/firebase/ProfileRepositoryFirebase.js';
+import { ProfileService } from './services/ProfileService.js';
+import { ProfileController } from './controllers/ProfileController.js';
+
+import { BlockRepositoryFirebase } from './repositories/firebase/BlockRepositoryFirebase.js';
+import { BlockService } from './services/BlockService.js';
+import { BlockController } from './controllers/BlockController.js';
+
 import { requireAuth } from './web/middlewares/requireAuth.js';
 import { adminDb } from './config/firebaseAdmin.js';
 import { PLAYERS_COLLECTION } from './models/Player.js';
@@ -57,7 +65,7 @@ routes.get('/login', (req, res) =>
   })
 );
 
-routes.get('/register', (req, res) =>
+routes.get('/signup', (req, res) =>
   res.render('auth/register', {
     title: 'Cadastro',
     subtitle: '',
@@ -66,7 +74,12 @@ routes.get('/register', (req, res) =>
   })
 );
 
-routes.get('/terms', (req, res) =>
+routes.get('/register', (req, res) =>
+  res.redirect(303, '/signup')
+);
+
+/* ------------------------ Terms ------------------------ */
+routes.get('/terms', (_req, res) =>
   res.render('terms', {
     title: 'Termos de Uso',
     subtitle: '',
@@ -101,10 +114,15 @@ routes.get('/profile/edit', requireAuth, editProfileCtrl.form);
 routes.post('/profile/edit', requireAuth, upload.single('avatar'), editProfileCtrl.update);
 routes.patch('/profile/edit/:field', requireAuth, editProfileCtrl.partialUpdate);
 
+/* ------------------------ Block/Report (MVC) - inicializado antes para ser usado em outros controllers ------------------------ */
+const blockRepo = new BlockRepositoryFirebase();
+const blockSvc = new BlockService(blockRepo);
+const blockCtrl = new BlockController(blockSvc);
+
 /* ------------------------ Presence (MVC) ------------------------ */
 const presenceRepo = new PresenceRepositoryFirebase();
 const presenceSvc = new PresenceService(presenceRepo);
-const presenceCtrl = new PresenceController(presenceSvc);
+const presenceCtrl = new PresenceController(presenceSvc, blockSvc);
 
 routes.post('/presence/online', requireAuth, presenceCtrl.online);
 routes.post('/presence/offline', requireAuth, presenceCtrl.offline);
@@ -112,24 +130,19 @@ routes.post('/presence/ping', requireAuth, presenceCtrl.ping);
 routes.get('/players/online', requireAuth, presenceCtrl.listOnline);
 routes.get('/players/online/similar', requireAuth, presenceCtrl.listSimilar);
 
-/* ------------------------ Call (Chamados) ------------------------ */
-const callRepo = new CallRepositoryFirebase();
-const callSvc = new CallService(callRepo);
-const callCtrl = new CallController(callSvc);
+/* ------------------------ Notifications (must be before calls) ------------------------ */
+const notificationRepo = new NotificationRepositoryFirebase();
+const notificationSvc = new NotificationService(notificationRepo);
+const notificationCtrl = new NotificationController(notificationSvc);
 
-// Rota para listar os chamados
-routes.get('/calls', requireAuth, callCtrl.listOpen);             // Lista chamados abertos
-routes.post('/calls', requireAuth, callCtrl.create);              // Cria novo chamado
-routes.post('/calls/:id/join', requireAuth, callCtrl.join);       // Participa de um chamado
-routes.post('/calls/:id/close', requireAuth, callCtrl.close);     // Fecha um chamado
-routes.get('/calls/:id', requireAuth, callCtrl.getById);          // Detalhes do chamado
-
-routes.post('/calls/:id/remove/:participantUid', requireAuth, callCtrl.removeParticipant); // Remove participante
+routes.get('/notifications', requireAuth, notificationCtrl.list);              // Lista notificações
+routes.post('/notifications/:id/read', requireAuth, notificationCtrl.markAsRead) // Marca como lida
+routes.delete('/notifications/:id', requireAuth, notificationCtrl.delete);    // Deleta notificação
 
 /* ------------------------ Friends (Amigos) ------------------------ */
 const amigoRepo = new AmigoRepositoryFirebase();
 const amigoSvc = new AmigoService(amigoRepo);
-const amigoCtrl = new AmigoController(amigoSvc);
+const amigoCtrl = new AmigoController(amigoSvc, blockSvc);
 
 routes.get('/friends', requireAuth, amigoCtrl.list);              // Lista amigos e solicitações
 routes.post('/friends/add', requireAuth, amigoCtrl.addFriend);    // Adiciona amigo
@@ -137,14 +150,34 @@ routes.post('/friends/:friendUid/remove', requireAuth, amigoCtrl.removeFriend); 
 routes.post('/friends/:friendUid/accept', requireAuth, amigoCtrl.acceptRequest); // Aceita solicitação
 routes.post('/friends/:friendUid/reject', requireAuth, amigoCtrl.rejectRequest); // Rejeita solicitação
 
-/* ------------------------ Notifications ------------------------ */
-const notificationRepo = new NotificationRepositoryFirebase();
-const notificationSvc = new NotificationService(notificationRepo);
-const notificationCtrl = new NotificationController(notificationSvc);
+/* ------------------------ Call (Chamados) ------------------------ */
+const callRepo = new CallRepositoryFirebase();
+const callSvc = new CallService(callRepo);
+const callCtrl = new CallController(callSvc, notificationSvc, amigoSvc, blockSvc);
 
-routes.get('/notifications', requireAuth, notificationCtrl.list);              // Lista notificações
-routes.post('/notifications/:id/read', requireAuth, notificationCtrl.markAsRead); // Marca como lida
-routes.delete('/notifications/:id', requireAuth, notificationCtrl.delete);    // Deleta notificação
+// Rotas de chamados
+routes.get('/calls', requireAuth, callCtrl.listOpen);              // Lista chamados (JSON para API)
+routes.post('/calls', requireAuth, callCtrl.create);               // Cria novo chamado
+routes.post('/calls/:id/join', requireAuth, callCtrl.join);        // Participa de um chamado
+routes.post('/calls/:id/close', requireAuth, callCtrl.close);      // Fecha um chamado
+routes.post('/calls/:id/leave', requireAuth, callCtrl.leave);      // Sai do chamado (não dono)
+routes.get('/calls/:id', requireAuth, callCtrl.getById);           // Detalhes do chamado
+routes.post('/calls/:id/remove/:participantUid', requireAuth, callCtrl.removeParticipant); // Remove participante
+
+/* ------------------------ Profile (Visualização) ------------------------ */
+const profileRepo = new ProfileRepositoryFirebase();
+const profileSvc = new ProfileService(profileRepo);
+const profileCtrl = new ProfileController(profileSvc, amigoSvc, blockSvc);
+
+routes.get('/profile/:uid', requireAuth, profileCtrl.view);    // Visualizar perfil de outro jogador
+routes.get('/profile/edit', requireAuth, profileCtrl.editForm); // Editar próprio perfil
+routes.post('/profile/update', requireAuth, profileCtrl.update); // Atualizar próprio perfil
+
+/* ------------------------ Block/Report (Denúncia e Bloqueio) ------------------------ */
+routes.get('/block/report/:uid', requireAuth, blockCtrl.reportForm);   // Página de denúncia
+routes.post('/block/report', requireAuth, blockCtrl.report);           // Processa denúncia com email
+routes.post('/block/unblock/:uid', requireAuth, blockCtrl.unblock);   // Desbloqueia usuário
+routes.post('/block/:uid', requireAuth, blockCtrl.block);              // Apenas bloqueia usuário (deve vir por último para não conflitar)
 
 /* ------------------------ Home ------------------------ */
 routes.get('/home', requireAuth, async (req, res) => {
@@ -157,6 +190,22 @@ routes.get('/home', requireAuth, async (req, res) => {
   // Recupera os chamados abertos
   const calls = await callSvc.listOpen(30);  // 30 é o número máximo de chamados a ser exibido, altere conforme necessário
 
+  // Busca o chamado ativo do usuário
+  const activeCall = await callSvc.getActiveCallByUser(uid);
+  const activeCallId = activeCall?.id || null;
+
+  // Reordena os chamados: o chamado ativo primeiro, depois os outros
+  let callsToRender = calls;
+  if (activeCallId && calls.length > 0) {
+    const activeCallIndex = calls.findIndex(c => c.id === activeCallId);
+    if (activeCallIndex !== -1) {
+      // Remove o chamado ativo da posição original
+      const [activeCallObj] = calls.splice(activeCallIndex, 1);
+      // Coloca no início da lista
+      callsToRender = [activeCallObj, ...calls];
+    }
+  }
+
   // Recupera notificações não lidas para o badge
   const notifications = await notificationSvc.listByRecipient(uid);
   const unreadCount = notifications.filter(n => !n.read).length;
@@ -166,7 +215,8 @@ routes.get('/home', requireAuth, async (req, res) => {
     title: 'Home',
     subtitle: '',
     player,  // Passando as informações do jogador
-    calls,   // Passando os chamados para a view
+    calls: callsToRender,   // Passando os chamados reordenados para a view
+    activeCallId,  // Passando o ID do chamado ativo
     unreadNotifications: unreadCount,  // Passando contagem de notificações não lidas
   });
 });

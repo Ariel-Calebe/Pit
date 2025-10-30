@@ -1,11 +1,15 @@
 // src/controllers/AmigoController.ts
 import type { Request, Response } from 'express';
 import { AmigoService } from '../services/AmigoService.js';
+import { BlockService } from '../services/BlockService.js';
 import { adminDb } from '../config/firebaseAdmin.js';
 import { PLAYERS_COLLECTION } from '../models/Player.js';
 
 export class AmigoController {
-  constructor(private readonly svc: AmigoService) {}
+  constructor(
+    private readonly svc: AmigoService,
+    private readonly blockSvc?: BlockService
+  ) {}
 
   /** Adiciona um amigo (envia solicitação) */
   addFriend = async (req: Request, res: Response) => {
@@ -96,12 +100,23 @@ export class AmigoController {
       const pendingUids = await this.svc.listPendingRequests(uid);
 
       // Busca dados dos jogadores
-      const friendsPromises = friendsUids.map(async (fUid) => {
+      // Filtra UIDs bloqueados
+      let filteredFriendsUids = friendsUids;
+      let filteredPendingUids = pendingUids;
+      
+      if (this.blockSvc) {
+        const blockedUids = await this.blockSvc.listBlockedBy(uid);
+        const blockedSet = new Set(blockedUids);
+        filteredFriendsUids = friendsUids.filter(fUid => !blockedSet.has(fUid));
+        filteredPendingUids = pendingUids.filter(pUid => !blockedSet.has(pUid));
+      }
+
+      const friendsPromises = filteredFriendsUids.map(async (fUid) => {
         const doc = await adminDb.collection(PLAYERS_COLLECTION).doc(fUid).get();
         return doc.exists ? { uid: fUid, ...doc.data() } : null;
       });
 
-      const pendingPromises = pendingUids.map(async (pUid) => {
+      const pendingPromises = filteredPendingUids.map(async (pUid) => {
         const doc = await adminDb.collection(PLAYERS_COLLECTION).doc(pUid).get();
         return doc.exists ? { uid: pUid, ...doc.data() } : null;
       });

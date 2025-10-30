@@ -1,4 +1,22 @@
 <!-- src/views/presence/online-list.ejs -->
+<style>
+.report-btn-small {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 4px;
+  padding: 4px 6px;
+  cursor: pointer;
+  color: #ef4444;
+  font-size: 10px;
+  transition: all 0.15s ease;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+.report-btn-small:hover {
+  background: rgba(239, 68, 68, 0.2);
+}
+</style>
 <div class="presence-widget max-h-80 w-64 overflow-y-auto rounded-xl bg-white shadow-lg border border-slate-200 text-left">
   <% if (players && players.length) { %>
     <ul class="divide-y divide-slate-100">
@@ -23,7 +41,10 @@
               <p class="text-xs text-slate-400">Online agora</p>
             <% } %>
           </div>
-          <div class="h-2 w-2 bg-green-500 rounded-full" title="Online"></div>
+          <div class="flex items-center gap-2">
+            <a href="/block/report/<%= p.uid %>" class="report-btn-small" title="Denunciar">🚨</a>
+            <div class="h-2 w-2 bg-green-500 rounded-full" title="Online"></div>
+          </div>
         </li>
       <% }) %>
     </ul>

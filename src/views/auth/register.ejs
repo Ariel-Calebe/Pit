@@ -3,7 +3,7 @@
 <!--
   Register Page – Card Único Centralizado com LOGO
   ✔ Fundo sólido 100% (#0F1016)
-  ✔ Apenas um card ao centro (sem “card fantasma”)
+  ✔ Apenas um card ao centro (sem "card fantasma")
   ✔ Logo centralizada acima do card
   ✔ Responsivo (mobile-first)
   ✔ Botão Google preservado porém oculto
@@ -159,15 +159,43 @@
   /* Botão Google preservado e invisível (compat) */
   .btn--google{ display:none !important; }
 
-  /* Alerta de erro de cadastro (mantido) */
-  .alert-error{
-    margin-bottom:14px;
-    border-radius:10px;
-    border:1px solid rgba(255, 97, 97, .35);
-    background: rgba(255, 97, 97, .08);
-    padding:12px 14px;
-    color:#ff9a9a;
-    font-size:.93rem;
+  /* Alertas de erro */
+  .alert {
+    padding: 14px 16px;
+    border-radius: 10px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    animation: slideDown 0.3s ease-out;
+  }
+
+  .alert--error {
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    color: #fca5a5;
+  }
+
+  .alert--warning {
+    background: rgba(245, 158, 11, 0.15);
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    color: #fcd34d;
+  }
+
+  .alert-content {
+    font-size: 0.93rem;
+    line-height: 1.5;
+  }
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   /* Acessibilidade: reduz animações */
@@ -194,8 +222,8 @@
     <div class="auth-card" role="dialog" aria-labelledby="register-title">
 
       <% if (error) { %>
-        <div class="alert-error">
-          Erro no cadastro: <strong><%= code || 'tente novamente' %></strong>
+        <div id="errorAlert" class="alert alert--error">
+          <div class="alert-content"></div>
         </div>
       <% } %>
 
@@ -208,7 +236,7 @@
       </button>
 
       <!-- Formulário de cadastro -->
-      <form id="formSignup" class="form form--signup" method="post" action="/auth/signup" autocomplete="on" novalidate>
+      <form id="formSignup" class="form form--signup" method="post" action="/signup" autocomplete="on" novalidate>
 
         <!-- Nome -->
         <label class="field">
@@ -278,6 +306,35 @@
     img.addEventListener('error', tryNext, { once:false });
   })();
 
+  // Mapeamento de erros para mensagens amigáveis
+  const errorMessages = {
+    // Erros de Cadastro
+    'auth/email-already-in-use': 'Este e-mail já está cadastrado. Tente fazer login ou use outro e-mail.',
+    'auth/invalid-email': 'Formato de e-mail inválido. Verifique se o e-mail está correto.',
+    'auth/weak-password': 'A senha deve ter pelo menos 6 caracteres.',
+    'auth/operation-not-allowed': 'Este método de autenticação não está disponível.',
+    'auth/too-many-requests': 'Muitas tentativas. Tente novamente mais tarde.',
+    'missing_required_fields': 'Por favor, preencha todos os campos obrigatórios.',
+    
+    // Genéricos
+    'auth/internal-error': 'Erro interno do servidor. Tente novamente em alguns instantes.',
+    'signup_error': 'Erro ao criar conta. Tente novamente.',
+    'signup': 'Erro ao criar conta. Tente novamente.',
+  };
+
+  // Exibir erro se houver
+  (function displayError() {
+    <% if (error && code) { %>
+      const errorAlert = document.getElementById('errorAlert');
+      if (errorAlert) {
+        const errorCode = '<%= code %>';
+        const errorMessage = errorMessages[errorCode] || errorMessages['signup'] || 'Erro desconhecido';
+        errorAlert.querySelector('.alert-content').textContent = errorMessage;
+        errorAlert.style.display = 'flex';
+      }
+    <% } %>
+  })();
+
   // Mantido para extensões futuras (validações etc.)
   (function(){
     const form = document.getElementById('formSignup');
@@ -287,73 +344,3 @@
     });
   })();
 </script>
-
-<!-- ============================================================
-     MARCAÇÃO ORIGINAL DO ARQUIVO (PRESERVADA, PORÉM COMENTADA)
-     ============================================================
-
-<div class="auth-shell">
-  <header class="auth-header">
-      <img src="/logo.png" alt="Co-Up" class="brand__img" />
-      <span class="brand__text sr-only">Co-Up</span>
-  </header>
-
-  <section class="auth-grid">
-    <% if (error) { %>
-  <div class="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
-    Erro no cadastro: <strong><%= code || 'tente novamente' %></strong>
-  </div>
-<% } %>
-    <div class="auth-panel auth-panel--right">
-      <h2 class="auth-title">Crie uma conta</h2>
-
-      <button class="btn--google" type="button">
-        <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google logo">
-      </button>
-
-      <p class="muted center">ou use seu email</p>
-
-      <form id="formSignup" class="form form--signup" method="post" action="/auth/signup" autocomplete="on" novalidate>
-        <label class="field">
-          <span class="field__label">Nome</span>
-          <div class="input-box">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" class="icon">
-              <path fill="#fff" d="M224 256A128 128 0 1 0 224 0a128 128 0 1 0 0 256zm-45.7 48C79.8 304 0 383.8 0 482.3C0 498.7 13.3 512 29.7 512H418.3c16.4 0 29.7-13.3 29.7-29.7C448 383.8 368.2 304 269.7 304H178.3z"/>
-            </svg>
-            <input name="name" type="text" class="field__input" placeholder="Seu nome completo" required />
-          </div>
-        </label>
-
-        <label class="field">
-          <span class="field__label">E-mail</span>
-          <div class="input-box">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" class="icon">
-              <path fill="#fff" d="M112 128C85.5 128 64 149.5 64 176C64 191.1 71.1 205.3 83.2 214.4L291.2 370.4C308.3 383.2 331.7 383.2 348.8 370.4L556.8 214.4C568.9 205.3 576 191.1 576 176C576 149.5 554.5 128 528 128L112 128zM64 260L64 448C64 483.3 92.7 512 128 512L512 512C547.3 512 576 483.3 576 448L576 260L377.6 408.8C343.5 434.4 296.5 434.4 262.4 408.8L64 260z" />
-            </svg>
-            <input name="email" type="email" class="field__input" placeholder="exemplo@email.com" required />
-          </div>
-        </label>
-
-        <label class="field">
-          <span class="field__label">Senha</span>
-          <div class="input-box">
-            <span class="icon">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640">
-                <path fill="#fff" d="M256 160L256 224L384 224L384 160C384 124.7 355.3 96 320 96C284.7 96 256 124.7 256 160zM192 224L192 160C192 89.3 249.3 32 320 32C390.7 32 448 89.3 448 160L448 224C483.3 224 512 252.7 512 288L512 512C512 547.3 483.3 576 448 576L192 576C156.7 576 128 547.3 128 512L128 288C128 252.7 156.7 224 192 224z" />
-              </svg>
-            </span>
-            <input name="password" type="password" class="field__input" placeholder="Crie uma senha segura" required />
-          </div>
-        </label>
-
-        <p class="muted center">Ao se cadastrar, você aceita nossos <a href="/terms" class="terms-link">termos de uso</a></p>
-
-        <button class="btn btn--primary" type="submit">CADASTRAR</button>
-      </form>
-
-      <p class="muted center">Já tem conta? <a href="/login">Faça login</a></p>
-    </div>
-  </section>
-</div>
-
--->

@@ -1,7 +1,13 @@
 export class CallController {
     svc;
-    constructor(svc) {
+    notificationSvc;
+    amigoSvc;
+    blockSvc;
+    constructor(svc, notificationSvc, amigoSvc, blockSvc) {
         this.svc = svc;
+        this.notificationSvc = notificationSvc;
+        this.amigoSvc = amigoSvc;
+        this.blockSvc = blockSvc;
     }
     /** Lista todos os chamados abertos e renderiza na home (ou endpoint JSON) */
     listOpen = async (req, res) => {
@@ -21,9 +27,30 @@ export class CallController {
                 filters.search = req.query.search.trim().toLowerCase();
             }
             const calls = await this.svc.listOpen(30, filters); // Ou o número que você deseja
-            // Se não houver chamados, passa 'calls' como um array vazio
-            const callsToRender = calls.length > 0 ? calls : [];
-            // Compute unique filter options from calls
+            // Busca o chamado ativo do usuário
+            const uid = req.uid;
+            const activeCall = await this.svc.getActiveCallByUser(uid);
+            const activeCallId = activeCall?.id || null;
+            // Reordena os chamados: o chamado ativo primeiro, depois os outros
+            let callsToRender = [];
+            if (calls.length > 0) {
+                if (activeCallId) {
+                    const activeCallIndex = calls.findIndex(c => c.id === activeCallId);
+                    if (activeCallIndex !== -1) {
+                        // Remove o chamado ativo da posição original
+                        const [activeCall] = calls.splice(activeCallIndex, 1);
+                        // Coloca no início da lista
+                        callsToRender = [activeCall, ...calls];
+                    }
+                    else {
+                        callsToRender = calls;
+                    }
+                }
+                else {
+                    callsToRender = calls;
+                }
+            }
+            // Compute unique filter options from calls (use original calls for filter options)
             const uniqueGames = new Set();
             const uniqueCallFriendly = new Set();
             const uniquePlaystyles = new Set();
@@ -32,10 +59,11 @@ export class CallController {
                 uniqueCallFriendly.add(call.callFriendly);
                 call.playstyles.forEach(style => uniquePlaystyles.add(style));
             });
-            // Se for API (Accept: application/json), retorna JSON
+            // Se for API (Accept: application/json), retorna JSON com chamados reordenados
             if (req.headers.accept?.includes('application/json')) {
                 return res.status(200).json({
-                    calls,
+                    calls: callsToRender, // Retorna os chamados reordenados
+                    activeCallId,
                     filterOptions: {
                         games: Array.from(uniqueGames),
                         callFriendly: Array.from(uniqueCallFriendly),
@@ -43,12 +71,17 @@ export class CallController {
                     }
                 });
             }
+            // Recupera notificações não lidas para o badge
+            const notifications = await this.notificationSvc.listByRecipient(uid);
+            const unreadCount = notifications.filter(n => !n.read).length;
             // Se for EJS, renderiza a home com os chamados e opções de filtro
             res.render('home', {
                 title: 'Home',
                 subtitle: '',
                 player: req.player, // Passando as informações do jogador
                 calls: callsToRender, // Passando os chamados (ou array vazio)
+                activeCallId, // Passando o ID do chamado ativo do usuário
+                unreadNotifications: unreadCount, // Passando contagem de notificações não lidas
                 filterOptions: {
                     games: Array.from(uniqueGames),
                     callFriendly: Array.from(uniqueCallFriendly),
@@ -65,8 +98,8 @@ export class CallController {
     create = async (req, res) => {
         try {
             const uid = req.uid;
-            const { title, gameId, platform, callFriendly, playstyles } = req.body;
-            const call = await this.svc.create({ ownerUid: uid, title, gameId, platform, callFriendly, playstyles });
+            const { title, description, gameId, platform, callFriendly, playstyles } = req.body;
+            const call = await this.svc.create({ ownerUid: uid, title, description, gameId, platform, callFriendly, playstyles });
             // Sempre retorna JSON para requisições AJAX/fetch
             if (req.headers.accept?.includes('application/json') || req.xhr || req.headers['content-type']?.includes('application/json')) {
                 return res.status(200).json(call);
@@ -136,6 +169,32 @@ export class CallController {
             return res.status(400).json({ error: code });
         }
     };
+    /** Usuário sai do chamado */
+    leave = async (req, res) => {
+        try {
+            const uid = req.uid;
+            const { id } = req.params;
+            // Verifica se o usuário é o dono
+            const call = await this.svc.getById(id);
+            if (!call)
+                return res.status(404).json({ error: 'call_not_found' });
+            // Se for o dono, não pode sair, deve fechar o chamado
+            if (call.ownerUid === uid) {
+                return res.status(400).json({ error: 'owner_cannot_leave' });
+            }
+            // Remove o usuário
+            await this.svc.leave(id, uid);
+            if (req.headers.accept?.includes('application/json')) {
+                return res.status(200).json({ success: true });
+            }
+            return res.redirect('/home');
+        }
+        catch (e) {
+            console.error('[call_leave_error]', e?.message || e);
+            const code = e?.message || 'leave_error';
+            return res.status(400).json({ error: code });
+        }
+    };
     /** Exibe os detalhes de um chamado (participantes, chat etc.) */
     getById = async (req, res) => {
         try {
@@ -145,16 +204,27 @@ export class CallController {
                 return res.status(404).send('Chamado não encontrado');
             // Obtem o player (usuário logado) do `req`
             const player = req.player;
+            const currentUid = req.uid;
             // Busca dados dos participantes
             const { adminDb } = await import('../config/firebaseAdmin.js');
             const { PLAYERS_COLLECTION } = await import('../models/Player.js');
-            const participantsData = await Promise.all(call.participants.map(async (uid) => {
+            // Busca lista de amigos do usuário atual
+            const currentFriends = await this.amigoSvc.listFriends(currentUid);
+            // Filtra participantes bloqueados
+            let filteredParticipants = call.participants;
+            if (this.blockSvc) {
+                const blockedUids = await this.blockSvc.listBlockedBy(currentUid);
+                const blockedSet = new Set(blockedUids);
+                filteredParticipants = call.participants.filter(uid => !blockedSet.has(uid));
+            }
+            const participantsData = await Promise.all(filteredParticipants.map(async (uid) => {
                 const doc = await adminDb.collection(PLAYERS_COLLECTION).doc(uid).get();
-                return doc.exists ? { uid, ...doc.data() } : { uid, name: 'Unknown', photoUrl: null };
+                const data = doc.exists ? { uid, ...doc.data() } : { uid, name: 'Unknown', photoUrl: null };
+                return {
+                    ...data,
+                    isFriend: currentFriends.includes(uid)
+                };
             }));
-            // Debug: Verifique se o player está sendo passado corretamente
-            console.log('Player:', player);
-            console.log('Call Owner:', call.ownerUid);
             // Passa o player junto com o chamado para a view
             res.render('calls/detail', {
                 title: call.title,

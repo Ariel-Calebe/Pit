@@ -19,9 +19,38 @@ function normStrings(input?: string[] | null, toLower = false): string[] | undef
 
 function normPlatforms(input?: string[] | null): string[] | undefined {
   if (input == null) return undefined;
+  
+  // Map user-friendly names to normalized keys
+  const platformMap: Record<string, string> = {
+    'pc': 'pc',
+    'playstation': 'playstation',
+    'ps': 'playstation',
+    'xbox': 'xbox',
+    'switch': 'switch',
+    'nintendo switch': 'switch',
+    'mobile': 'mobile',
+    // Handle case variations
+    'PC': 'pc',
+    'PlayStation': 'playstation',
+    'PS': 'playstation',
+    'Xbox': 'xbox',
+    'Switch': 'switch',
+    'Nintendo Switch': 'switch',
+    'Mobile': 'mobile',
+  };
+  
   const out = input
-    .map((v) => String(v).trim().toLowerCase())
-    .filter((v) => ALLOWED_PLATFORMS.has(v));
+    .map((v) => {
+      const normalized = String(v).trim().toLowerCase();
+      // Try exact match first, then check the map
+      if (platformMap[normalized]) return platformMap[normalized];
+      // Try the original string
+      if (platformMap[v]) return platformMap[v];
+      // Return normalized if it's allowed, otherwise undefined
+      return ALLOWED_PLATFORMS.has(normalized) ? normalized : undefined;
+    })
+    .filter((v): v is string => v !== undefined);
+    
   return out.length ? dedupe(out) : undefined;
 }
 
@@ -52,16 +81,26 @@ export class EditProfileService {
       throw new Error('name_too_long');
     }
 
+    // Helper para normalizar arrays (permitindo arrays vazios)
+    const normArray = (arr?: string[] | null): string[] => {
+      if (arr == null || arr.length === 0) return [];
+      const out = arr
+        .map((v) => String(v).trim())
+        .filter((v) => v.length > 0);
+      return dedupe(out);
+    };
+
     const payload: EditProfileInput = {
       uid: input.uid,
-      name: input.name?.trim(),
+      name: input.name?.trim() || undefined,
       country: normCountry(input.country),
       photoUrl: input.photoUrl,
-      languages: normStrings(input.languages),
-      platforms: normPlatforms(input.platforms),
-      favoriteGameIds: normStrings(input.favoriteGameIds, true),
-      favoriteGenres: normStrings(input.favoriteGenres, true),
-      styles: normStrings(input.styles),
+      languages: input.languages !== undefined ? normArray(input.languages) : undefined,
+      platforms: input.platforms !== undefined ? normPlatforms(input.platforms) : undefined,
+      favoriteGameIds: input.favoriteGameIds !== undefined ? normArray(input.favoriteGameIds) : undefined,
+      favoriteGenres: input.favoriteGenres !== undefined ? normArray(input.favoriteGenres) : undefined,
+      styles: input.styles !== undefined ? normArray(input.styles) : undefined,
+      avatar: input.avatar,
     };
 
     return this.repo.updateProfile(payload);

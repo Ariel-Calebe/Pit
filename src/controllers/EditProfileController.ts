@@ -28,18 +28,40 @@ export class EditProfileController {
     try {
       const uid = (req as any).uid as string;
 
-      const payload = {
-        uid,
+      console.log('[editProfile_update] Recebendo dados:', {
         name: req.body.name,
         country: req.body.country,
-        languages: req.body.languages?.split(',').map((s: string) => s.trim()),
-        platforms: req.body.platforms?.split(',').map((s: string) => s.trim()),
-        favoriteGameIds: req.body.games?.split(',').map((s: string) => s.trim()),
-        favoriteGenres: req.body.genres?.split(',').map((s: string) => s.trim()),
-        styles: req.body.styles?.split(',').map((s: string) => s.trim()),
-        avatar: req.body.avatar, // filename like 'Ariel.png'
-        photoUrl: req.body.avatar ? `/images/avatares_players/${req.body.avatar}` : undefined,
+        languages: req.body.languages,
+        platforms: req.body.platforms,
+        games: req.body.games,
+        genres: req.body.genres,
+        styles: req.body.styles,
+        avatar: req.body.avatar,
+      });
+
+      // Helper para processar arrays de strings (trata strings vazias)
+      const parseArray = (str?: string): string[] | undefined => {
+        if (!str || str.trim() === '') return [];
+        const parsed = str.split(',').map((s: string) => s.trim()).filter(s => s.length > 0);
+        return parsed.length > 0 ? parsed : [];
       };
+
+      const payload = {
+        uid,
+        name: req.body.name?.trim() || '',
+        country: req.body.country?.trim() || '',
+        languages: parseArray(req.body.languages),
+        platforms: parseArray(req.body.platforms),
+        favoriteGameIds: parseArray(req.body.games),
+        favoriteGenres: parseArray(req.body.genres),
+        styles: parseArray(req.body.styles),
+        avatar: req.body.avatar?.trim() || '',
+        photoUrl: req.body.avatar && req.body.avatar.trim() !== '' 
+          ? `/images/avatares_players/${req.body.avatar}` 
+          : undefined,
+      };
+
+      console.log('[editProfile_update] Payload processado:', payload);
 
       await this.svc.update(payload);
       return res.redirect(303, '/home');
