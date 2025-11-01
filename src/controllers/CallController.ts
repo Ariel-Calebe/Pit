@@ -234,8 +234,9 @@ export class CallController {
     const currentUid = (req as any).uid as string;
 
     // Busca dados dos participantes
-    const { adminDb } = await import('../config/firebaseAdmin.js');
+    const { FirebaseConnectionSingleton } = await import('../config/FirebaseConnectionSingleton.js');
     const { PLAYERS_COLLECTION } = await import('../models/Player.js');
+    const adminDb = FirebaseConnectionSingleton.getInstance().db;
 
     // Busca lista de amigos do usuário atual
     const currentFriends = await this.amigoSvc.listFriends(currentUid);

@@ -22,3 +22,4 @@ export interface IBlockRepository {
    */
   remove(reporterUid: string, reportedUid: string): Promise<void>;
 }
+

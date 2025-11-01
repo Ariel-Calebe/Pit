@@ -1,3 +1,5 @@
+import { EventBus } from '../domain/events/EventBus.js';
+import { createFriendRequestCreatedEvent } from '../domain/events/types.js';
 export class AmigoService {
     repo;
     constructor(repo) {
@@ -12,6 +14,9 @@ export class AmigoService {
         if (playerUid === friendUid)
             throw new Error('cannot_add_self_as_friend');
         await this.repo.addFriend(playerUid, friendUid);
+        // Observer Pattern: Publica evento
+        const event = createFriendRequestCreatedEvent({ fromUid: playerUid, toUid: friendUid });
+        EventBus.getInstance().publish('FriendRequestCreated', event).catch(err => console.error('[AmigoService] Erro ao publicar evento FriendRequestCreated:', err));
     }
     /** Remove um amigo */
     async removeFriend(playerUid, friendUid) {

@@ -71,3 +71,4 @@ export class BlockRepositoryFirebase implements IBlockRepository {
     await Promise.all(snapshot.docs.map(doc => doc.ref.delete()));
   }
 }
+

@@ -1,3 +1,5 @@
+import { EventBus } from '../domain/events/EventBus.js';
+import { createCallCreatedEvent, createCallJoinedEvent } from '../domain/events/types.js';
 export class CallService {
     repo;
     constructor(repo) {
@@ -22,7 +24,16 @@ export class CallService {
             callFriendly: input.callFriendly,
             playstyles: input.playstyles,
         };
-        return this.repo.create(payload);
+        const call = await this.repo.create(payload);
+        // Observer Pattern: Publica evento
+        const event = createCallCreatedEvent({
+            callId: call.id,
+            ownerUid: call.ownerUid,
+            gameId: call.gameId,
+            platform: call.platform,
+        });
+        EventBus.getInstance().publish('CallCreated', event).catch(err => console.error('[CallService] Erro ao publicar evento CallCreated:', err));
+        return call;
     }
     /** Lista chamados abertos (máximo de 20 por vez, por padrão) */
     async listOpen(limit = 20, filters) {
@@ -55,7 +66,15 @@ export class CallService {
             throw new Error('missing_call_id');
         if (!uid)
             throw new Error('missing_uid');
-        return this.repo.join(callId, uid);
+        const call = await this.repo.join(callId, uid);
+        // Observer Pattern: Publica evento
+        const event = createCallJoinedEvent({
+            callId: call.id,
+            joinerUid: uid,
+            ownerUid: call.ownerUid,
+        });
+        EventBus.getInstance().publish('CallJoined', event).catch(err => console.error('[CallService] Erro ao publicar evento CallJoined:', err));
+        return call;
     }
     /** Fecha um chamado (somente o dono pode fechar) */
     async close(callId, ownerUid) {

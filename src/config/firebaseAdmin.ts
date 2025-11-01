@@ -1,29 +1,16 @@
 // src/config/firebaseAdmin.ts
-import admin from 'firebase-admin';
-import { env } from './env.js';
+/**
+ * @deprecated Este arquivo agora é um proxy para o Singleton.
+ * Use FirebaseConnectionSingleton.getInstance() diretamente em novos códigos.
+ */
+import { FirebaseConnectionSingleton } from './FirebaseConnectionSingleton.js';
 
-// Decodifica o JSON da service account (vindo do .env em Base64)
-const serviceAccountJson = Buffer.from(
-  env.firebase.serviceAccountBase64,
-  'base64'
-).toString('utf8');
-const serviceAccount = JSON.parse(serviceAccountJson);
+// Mantém compatibilidade com imports existentes
+const firebase = FirebaseConnectionSingleton.getInstance();
 
-// Inicializa o Firebase Admin **uma única vez**
-if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-    projectId: env.firebase.projectId,
-    storageBucket: `${env.firebase.projectId}.appspot.com`,
-  });
+export const adminAuth = firebase.auth;
+export const adminDb = firebase.db;
+export const adminBucket = firebase.bucket;
 
-  // Firestore: ignora campos undefined em todos os sets/updates
-  admin.firestore().settings({ ignoreUndefinedProperties: true });
-}
-
-// Exports das instâncias
-export const adminAuth = admin.auth();
-export const adminDb = admin.firestore();
-export const adminBucket = admin.storage().bucket();
-
-console.log('✅ Firebase Admin conectado com sucesso');
+// Re-exporta o Singleton para uso direto
+export { FirebaseConnectionSingleton };

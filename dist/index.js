@@ -1,5 +1,6 @@
 // index.ts
 import './src/config/firebaseAdmin'; // Inicializa Firebase Admin antes de tudo
+import { registerEventHandlers } from './src/bootstrap/events.js'; // Registra event handlers
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -84,6 +85,8 @@ app.use(cors({
 app.use(express.urlencoded({ limit: '1mb', extended: true })); // TS: option cast para manter compat
 app.use(express.json({ limit: '5mb' }));
 app.use(cookieParser());
+/* ------------------------ Event Handlers ------------------------ */
+registerEventHandlers();
 /* ------------------------ Rotas ------------------------ */
 app.use(routes);
 /* ------------------------ Start ------------------------ */

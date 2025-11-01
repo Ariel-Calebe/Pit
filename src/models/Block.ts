@@ -14,3 +14,4 @@ export type Block = {
   createdAt: Date;          // Data da criação do bloqueio
   updatedAt: Date;          // Data da última atualização
 };
+
