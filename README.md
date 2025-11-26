@@ -26,28 +26,29 @@ O **Co-Up** é uma plataforma web completa que promove engajamento social, troca
 
 ### Principais Características
 
-- ✅ Sistema completo de autenticação (email/senha e Google OAuth)
+- ✅ Sistema de autenticação com e-mail e senha
 - ✅ Perfis de jogadores personalizáveis com jogos favoritos, gêneros e estilos
 - ✅ Sistema de chamados (LFG - Looking for Group) para encontrar jogadores
-- ✅ Sistema de presença online em tempo real
+- ✅ Sistema de presença online em tempo quase real
 - ✅ Sugestões automáticas de jogadores compatíveis
 - ✅ Sistema de amizades e solicitações
-- ✅ Sistema de notificações
 - ✅ Bloqueio e denúncia de usuários
 - ✅ Interface responsiva e moderna
+- 🚧 Login com Google (planejado, **não implementado**)
+- 🚧 Sistema de notificações (planejado, **não implementado**)
 
 ---
 
 ## 👥 Integrantes
 
-| Nome | Matrícula |
-|------|-----------|
-| André Sette Camara Pereira | 22300201 |
-| **Ariel Calebe Carneiro Martins** | 22300066 |
-| Arthur da Silva Leite | 22301976 |
-| João Vitor Padilha Ferreira | 22300503 |
-| João Vitor Feliciano Pires | 22402837 |
-| Laura Ormy Santos Di Francesco | 22301763 |
+| Nome                                | Matrícula |
+|-------------------------------------|-----------|
+| André Sette Camara Pereira          | 22300201  |
+| Ariel Calebe Carneiro Martins       | 22300066  |
+| Arthur da Silva Leite               | 22301976  |
+| João Vitor Padilha Ferreira         | 22300503  |
+| João Vitor Feliciano Pires          | 22402837  |
+| Laura Ormy Santos Di Francesco      | 22301763  |
 
 **Turma:** 3A2
 
@@ -56,22 +57,26 @@ O **Co-Up** é uma plataforma web completa que promove engajamento social, troca
 ## 🛠️ Tecnologias
 
 ### Backend
+
 - **Node.js** + **TypeScript** (ES2022)
 - **Express.js** 5.1.0 (Framework web)
 - **Firebase Admin SDK** (Firestore Database)
-- **Nodemailer** (Envio de emails)
+- **Nodemailer** (Envio de emails para denúncias)
 
 ### Frontend
+
 - **EJS** + **ejs-mate** (Templating engine)
 - **CSS3** (Estilização customizada)
 - **JavaScript** (Vanilla)
 
 ### Ferramentas de Desenvolvimento
+
 - **ESLint** + **Prettier** (Code quality)
 - **tsx** (TypeScript execution)
 - **Multer** (Upload de arquivos)
 
 ### Banco de Dados
+
 - **Firebase Firestore** (NoSQL database)
 
 ---
@@ -150,20 +155,20 @@ service cloud.firestore {
 }
 ```
 
-4. Ative a **Authentication** com os provedores:
+4. Ative a **Authentication** com o provedor:
    - Email/Password
-   - Google
+   - (Google pode ser configurado depois, mas o login com Google ainda não foi implementado no sistema)
 
 ### Estrutura de Coleções no Firestore
 
 O projeto utiliza as seguintes coleções:
 
-- `players` - Perfis de jogadores
-- `calls` - Chamados (LFG)
-- `friendships` - Amizades e solicitações
-- `presence` - Presença online
-- `notifications` - Notificações
-- `blocks` - Bloqueios e denúncias
+- `players` – Perfis de jogadores
+- `calls` – Chamados (LFG)
+- `friendships` – Amizades e solicitações
+- `presence` – Presença online
+- `blocks` – Bloqueios e denúncias
+- (coleções de notificações podem existir como estrutura, mas não há fluxo funcional para RF19)
 
 ---
 
@@ -175,7 +180,7 @@ O projeto utiliza as seguintes coleções:
 npm run dev
 ```
 
-O servidor iniciará em `http://localhost:3000`
+O servidor iniciará em `http://localhost:3000`.
 
 ### Modo Produção
 
@@ -209,7 +214,7 @@ Pit-main/
 │   ├── config/           # Configurações (Firebase, env)
 │   ├── controllers/      # Controllers (MVC)
 │   ├── interfaces/       # Interfaces e contratos
-│   ├── models/          # Modelos de dados
+│   ├── models/           # Modelos de dados
 │   ├── repositories/     # Camada de acesso a dados
 │   │   └── firebase/     # Implementações Firebase
 │   ├── services/         # Lógica de negócio
@@ -239,59 +244,66 @@ Pit-main/
 
 ## ✨ Funcionalidades Implementadas
 
+**Status por RF:**
+✔️ Implementado · ⚠️ Parcialmente implementado · ❌ Não implementado
+
 ### 🧱 Bloco Base: Autenticação e Perfil
 
-- [X] **RF01** — Criar conta
+- ✔️ **RF01** — Criar conta
   - Sistema completo de cadastro com validação
-  - Onboarding após cadastro
+  - Integração com onboarding após cadastro
 
-- [X] **RF09** — Login com e-mail e senha
+- ✔️ **RF09** — Login com e-mail e senha
   - Autenticação via Firebase Auth
   - Sessão via cookies
 
-- [X] **RF10** — Recuperação de senha
-  - Envio de email de redefinição via Firebase
+- ✔️ **RF10** — Recuperação de senha
+  - Envio de e-mail de redefinição via Firebase
   - Endpoint: `POST /reset-password`
 
-- [X] **RF02** — Configurar perfil com nome, foto e jogos favoritos
+- ✔️ **RF02** — Configurar perfil com nome, foto e jogos favoritos
   - Onboarding completo na primeira entrada
   - Upload de avatar
   - Seleção de jogos, plataformas, idiomas, gêneros e estilos
 
-- [X] **RF17** — Editar perfil
+- ✔️ **RF17** — Editar perfil
   - Edição completa do perfil
   - Atualização de todas as informações
   - Endpoints: `GET /profile/edit`, `POST /profile/edit`
 
-- [X] **RF11** — Login com Google (extra)
-  - OAuth 2.0 com Google
-  - Endpoint: `POST /google`
+- ❌ **RF11** — Login com Google (extra)
+  - Planejado para o futuro
+  - Endpoint `POST /google` ainda não implementado
 
 ---
 
 ### 🔍 Bloco de Busca e Matchmaking
 
-- [X] **RF05** — Sistema de chamados (publicar convites)
+- ✔️ **RF05** — Sistema de chamados (publicar convites)
   - Criação de chamados LFG (Looking for Group)
   - Filtros por jogo, plataforma, tipo (friendly/competitive), estilos
   - Visualização e gerenciamento de chamados
   - Participação em chamados
-  - Endpoints: `GET /calls`, `POST /calls`, `POST /calls/:id/join`
+  - Endpoints:
+    - `GET /calls`
+    - `POST /calls`
+    - `POST /calls/:id/join`
 
-- [⚠️] **RF03** — Buscar jogadores por jogo e plataforma
-  - **Parcialmente implementado**: Busca disponível através dos chamados e lista de presença
-  - Filtros nos chamados incluem gameId e platform
+- ⚠️ **RF03** — Buscar jogadores por jogo e plataforma
+  - **Parcialmente implementado**
+  - Busca via listagem de chamados e presença online
+  - Filtros incluem `gameId` e `platform` nos chamados
 
-- [⚠️] **RF07** — Filtros de busca (nível, objetivo, idioma, região, etc.)
-  - **Parcialmente implementado**: Filtros disponíveis em chamados:
-    - Por jogo (`gameId`)
-    - Por tipo (`callFriendly`: friendly/competitive)
-    - Por estilos de jogo (`playstyles`)
-    - Busca textual (`search`)
-  - Filtros avançados de perfil (nível, região) não implementados
+- ⚠️ **RF07** — Filtros de busca (nível, objetivo, idioma, região, etc.)
+  - **Parcialmente implementado** via filtros em chamados:
+    - `gameId`
+    - `callFriendly` (friendly/competitive)
+    - `playstyles`
+    - `search`
+  - Filtros avançados de perfil (nível, região etc.) ainda não implementados
 
-- [X] **RF16** — Sugestões automáticas de jogadores compatíveis
-  - Sistema de jogadores similares baseado em:
+- ✔️ **RF16** — Sugestões automáticas de jogadores compatíveis
+  - Sistema de jogadores semelhantes baseado em:
     - Jogos favoritos em comum
     - Gêneros favoritos em comum
     - Plataformas em comum
@@ -302,59 +314,62 @@ Pit-main/
 
 ### 👥 Bloco de Interações e Conexões
 
-- [X] **RF06** — Visualizar perfil de outros usuários
+- ✔️ **RF06** — Visualizar perfil de outros usuários
   - Página completa de perfil
   - Exibição de informações públicas
   - Ações: adicionar amigo, denunciar/bloquear
   - Endpoint: `GET /profile/:uid`
 
-- [X] **RF04** — Adicionar jogador aos favoritos
+- ✔️ **RF04** — Adicionar jogador aos favoritos
   - Sistema completo de amizades
   - Envio e recebimento de solicitações
   - Aceitar/rejeitar solicitações
   - Lista de amigos
-  - Endpoints: `POST /friends/add`, `POST /friends/:uid/accept`, `POST /friends/:uid/reject`
+  - Endpoints:
+    - `POST /friends/add`
+    - `POST /friends/:uid/accept`
+    - `POST /friends/:uid/reject`
 
-- [X] **RF19** — Notificações de chamados aceitos
-  - Sistema completo de notificações
-  - Notificações para eventos importantes
-  - Badge com contador de não lidas
-  - Endpoints: `GET /notifications`, `POST /notifications/:id/read`
+- ❌ **RF19** — Notificações de chamados aceitos
+  - **Não implementado**
+  - Não há fluxo funcional de notificação para eventos de chamados
 
-- [ ] **RF08** — Chat básico entre usuários
+- ❌ **RF08** — Chat básico entre usuários
   - **Não implementado**
 
 ---
 
 ### 🛡️ Bloco de Segurança e Controle
 
-- [X] **RF13** — Bloquear jogadores
+- ✔️ **RF13** — Bloquear jogadores
   - Bloqueio completo de usuários
-  - Usuários bloqueados não aparecem em listas
+  - Usuários bloqueados não aparecem nas listas
   - Não é possível visualizar perfil de bloqueados
   - Endpoint: `POST /block/:uid`
 
-- [X] **RF14** — Denunciar comportamento inadequado
+- ✔️ **RF14** — Denunciar comportamento inadequado
   - Página de denúncia completa
-  - Instruções para envio de email manual
+  - Instruções para envio de e-mail manual
   - Bloqueio automático após denúncia
-  - Endpoint: `GET /block/report/:uid`, `POST /block/report`
+  - Endpoints:
+    - `GET /block/report/:uid`
+    - `POST /block/report`
 
-- [ ] **RF20** — Avaliação pós-partida (nota + comentário)
+- ❌ **RF20** — Avaliação pós-partida (nota + comentário)
   - **Não implementado**
 
-- [ ] **RF18** — Chat restrito a jogadores verificados
-  - **Não implementado** (chat não existe)
+- ❌ **RF18** — Chat restrito a jogadores verificados
+  - **Não implementado**
 
 ---
 
 ### 🧹 Bloco de Gestão da Conta
 
-- [X] **RF12** — Excluir conta e dados permanentemente
-  - **Status**: Funcionalidade disponível (não verificada no código atual)
-  - Deve ser implementado via Firebase Admin SDK
+- ❌ **RF12** — Excluir conta e dados permanentemente
+  - **Não implementado**
+  - Requer fluxo via Firebase Admin SDK (ainda não desenvolvido)
 
-- [ ] **RF15** — Histórico de partidas jogadas
+- ❌ **RF15** — Histórico de partidas jogadas
   - **Não implementado**
   - Estrutura de dados `Call` existe, mas não há visualização de histórico
 
@@ -362,14 +377,16 @@ Pit-main/
 
 ## 🔌 API e Rotas
 
+*Algumas rotas podem estar planejadas, mas não implementadas (especialmente login com Google e notificações).*
+
 ### Autenticação
 ```
 POST   /signup              # Criar conta
-POST   /login                # Login com email/senha
-POST   /reset-password       # Solicitar redefinição de senha
-POST   /google               # Login com Google
-GET    /login                # Página de login
-GET    /signup               # Página de cadastro
+POST   /login               # Login com email/senha
+POST   /reset-password      # Solicitar redefinição de senha
+# POST /google              # (planejado) Login com Google - ainda não implementado
+GET    /login               # Página de login
+GET    /signup              # Página de cadastro
 ```
 
 ### Perfil
@@ -401,34 +418,34 @@ POST   /friends/:uid/remove # Remover amigo
 
 ### Presença
 ```
-POST   /presence/online     # Marcar como online
-POST   /presence/offline    # Marcar como offline
-POST   /presence/ping       # Heartbeat de presença
-GET    /players/online      # Listar jogadores online
-GET    /players/online/similar # Jogadores similares
+POST   /presence/online           # Marcar como online
+POST   /presence/offline          # Marcar como offline
+POST   /presence/ping             # Heartbeat de presença
+GET    /players/online            # Listar jogadores online
+GET    /players/online/similar    # Jogadores similares
 ```
 
-### Notificações
+### Notificações (planejado, não implementado)
 ```
-GET    /notifications       # Listar notificações
-POST   /notifications/:id/read # Marcar como lida
-DELETE /notifications/:id   # Deletar notificação
+# GET    /notifications            # (planejado) Listar notificações
+# POST   /notifications/:id/read   # (planejado) Marcar como lida
+# DELETE /notifications/:id        # (planejado) Deletar notificação
 ```
 
 ### Bloqueio/Denúncia
 ```
-GET    /block/report/:uid   # Página de denúncia
-POST   /block/report        # Enviar denúncia
-POST   /block/:uid          # Bloquear usuário
-POST   /block/unblock/:uid  # Desbloquear usuário
+GET    /block/report/:uid    # Página de denúncia
+POST   /block/report         # Enviar denúncia
+POST   /block/:uid           # Bloquear usuário
+POST   /block/unblock/:uid   # Desbloquear usuário
 ```
 
 ### Outras
 ```
-GET    /home                # Página inicial
-GET    /terms               # Termos de uso
-GET    /health              # Health check
-GET    /                    # Redireciona para /auth
+GET    /home                 # Página inicial
+GET    /terms                # Termos de uso
+GET    /health               # Health check
+GET    /                     # Redireciona para /home ou /login
 ```
 
 ---
@@ -437,61 +454,62 @@ GET    /                    # Redireciona para /auth
 
 A interface foi desenvolvida com foco em:
 
-- **Design Moderno**: UI/UX inspirada em aplicativos gaming modernos
+- **Design moderno**: UI/UX inspirada em aplicativos gaming
 - **Responsividade**: Totalmente responsivo para mobile, tablet e desktop
-- **Tema Escuro**: Design dark theme otimizado para jogadores
+- **Tema escuro**: Design dark theme focado em conforto visual para gamers
 - **Acessibilidade**: Estrutura semântica e contraste adequado
 
 ---
 
 ## 📝 Checklist Geral de Funcionalidades
 
-- [X] Cadastro de usuários
-- [X] Login com autenticação
-- [X] Perfil de usuário com jogos favoritos
-- [⚠️] Busca por jogadores com filtros *(parcial - através de chamados)*
-- [X] Sistema de chamados para partidas
-- [X] Visualização de perfil de outros jogadores
-- [X] Adição de favoritos (amigos)
-- [ ] Chat interno entre jogadores
-- [X] Redefinição de senha
-- [X] Login com Google
-- [X] Exclusão de conta e dados *(requer verificação)*
-- [X] Bloqueio de usuários
-- [X] Denúncia de comportamento
-- [ ] Histórico de partidas
-- [X] Sugestão automática de jogadores compatíveis
+*Consolidação final dos RFs*
+
+- ✔️ Cadastro de usuários
+- ✔️ Login com autenticação (e-mail/senha)
+- ✔️ Perfil de usuário com jogos favoritos (onboarding + edição)
+- ⚠️ Busca por jogadores com filtros (parcial — via chamados/presença)
+- ✔️ Sistema de chamados para partidas
+- ✔️ Visualização de perfil de outros jogadores
+- ✔️ Adição de favoritos (amizades)
+- ❌ Chat interno entre jogadores
+- ✔️ Redefinição de senha
+- ❌ Login com Google
+- ❌ Exclusão de conta e dados
+- ✔️ Bloqueio de usuários
+- ✔️ Denúncia de comportamento
+- ❌ Histórico de partidas
+- ✔️ Sugestão automática de jogadores compatíveis
 
 ---
 
 ## 🚧 Funcionalidades Pendentes
 
 ### Alta Prioridade
-- [ ] Sistema de chat entre usuários
-- [ ] Histórico de partidas jogadas
-- [ ] Busca avançada de jogadores (fora dos chamados)
-- [ ] Avaliação pós-partida
+- ❌ Sistema de chat entre usuários (RF08)
+- ❌ Histórico de partidas jogadas (RF15)
+- ❌ Avaliação pós-partida (RF20)
 
 ### Média Prioridade
-- [ ] Verificação de usuários (para chat restrito)
-- [ ] Filtros avançados de busca (nível de habilidade, região, etc.)
-- [ ] Sistema de badges e conquistas
-- [ ] Modo escuro/claro (toggle)
+- ❌ Busca avançada de jogadores fora dos chamados (RF03/RF07 completos)
+- ❌ Verificação de usuários (para chat restrito — RF18)
+- ❌ Sistema de notificações funcional (RF19)
 
 ### Baixa Prioridade
-- [ ] Notificações push
-- [ ] Integração com Discord
-- [ ] Sistema de grupos/clãs
-- [ ] Marketplace de skins/itens
+- ❌ Login com Google (RF11)
+- ❌ Notificações push
+- ❌ Integração com Discord
+- ❌ Sistema de grupos/clãs
+- ❌ Sistema de badges e conquistas
 
 ---
 
 ## 🤝 Contribuindo
 
 1. Fork o projeto
-2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
-3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
-4. Push para a branch (`git push origin feature/AmazingFeature`)
+2. Crie uma branch para sua feature (`git checkout -b feature/NomeDaFeature`)
+3. Commit suas mudanças (`git commit -m 'Add feature X'`)
+4. Push para a branch (`git push origin feature/NomeDaFeature`)
 5. Abra um Pull Request
 
 ---
@@ -504,10 +522,10 @@ Este projeto foi desenvolvido como trabalho acadêmico para a turma 3A2.
 
 ## 📧 Contato
 
-Para dúvidas ou sugestões sobre o projeto, entre em contato através do email de suporte: **suporte.coup@gmail.com**
+Para dúvidas ou sugestões sobre o projeto, entre em contato através do email de suporte:
+
+**suporte.coup@gmail.com**
 
 ---
 
 **Desenvolvido com ❤️ pela equipe Co-Up**
-
-
